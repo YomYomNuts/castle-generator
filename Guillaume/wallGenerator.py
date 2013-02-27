@@ -62,12 +62,12 @@ class WallGenerator:
         positionWall = mathutils.Vector((x1, y1, 0))
         
         # Verify if the position is visible by the others points
-        if self.visible2(positionWall, initialPosition, self.positionCenter) < 0:
+        if self.visible(positionWall, initialPosition, self.positionCenter) < 0:
             # Change position
             positionWall = mathutils.Vector((x2, y2, 0))
         
         # Add the point
-        if len(self.positionsInternalWall) < 3 or not (self.visible2(positionWall, self.positionsInternalWall[0], self.positionCenter) > 0 and self.visible2(initialPosition, self.positionsInternalWall[0], self.positionCenter) < 0):
+        if len(self.positionsInternalWall) < 3 or not (self.visible(positionWall, self.positionsInternalWall[0], self.positionCenter) > 0 and self.visible(initialPosition, self.positionsInternalWall[0], self.positionCenter) < 0):
             # Do the edges
             if len(self.positionsInternalWall) > 0:
                 self.listEdges.append((len(self.positionsInternalWall) - 1, len(self.positionsInternalWall)))
@@ -78,7 +78,7 @@ class WallGenerator:
             self.listEdges.append((len(self.positionsInternalWall) - 1, 0))
     
     # Defines the visibility of a point
-    def visible2(self, vertex, previousVertex, previousPreviousVertex):
+    def visible(self, vertex, previousVertex, previousPreviousVertex):
         segmentActuel = mathutils.Vector((previousPreviousVertex.x - previousVertex.x, previousPreviousVertex.y - previousVertex.y, 0))
         segmentPrecedent = mathutils.Vector((vertex.x - previousVertex.x, vertex.y - previousVertex.y, 0))
         
@@ -104,6 +104,11 @@ class WallGenerator:
                 # Edges between internal and external vertex
                 self.listEdges.append((index, len(self.positionsInternalWall) + len(self.positionsExternalWall)))
                 
+                # Do the faces
+                if len(self.positionsExternalWall) > 0:
+                    self.listFaces.append((index - 1, index, len(self.positionsInternalWall) + len(self.positionsExternalWall), len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1))
+                
+                # Add the new vertex
                 if self.positionCenter.x > pos.x:
                     if self.positionCenter.y > pos.y:
                         if self.positionCenter.x > x1 and self.positionCenter.y > y1:
@@ -148,7 +153,11 @@ class WallGenerator:
                         else:
                             self.positionsExternalWall.append(mathutils.Vector((x2, y2, 0)))
             index += 1
+        
         # Add the last edges
-        self.listEdges.append((len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1, len(self.positionsInternalWall)))
+        self.listEdges.append((len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1, index - 1))
+        # Add the last faces
+        self.listFaces.append((index - 1, 0, index, len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1))
+                
     
 wall = WallGenerator()
