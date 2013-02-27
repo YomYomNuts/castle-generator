@@ -21,7 +21,7 @@ class WallGenerator:
         tempVector = mathutils.Vector((self.positionCenter.x + self.distance, self.positionCenter.y, 0))
         self.createInternalWall(tempVector, random.uniform(0, self.distance * 2))
         self.createExternalWall()
-        object = createMesh("Test", (0,0,0), self.positionsInternalWall + self.positionsExternalWall, self.listEdges, self.listFaces)
+        object = createMesh("WallGenerator", (0,0,0), self.positionsInternalWall + self.positionsExternalWall, self.listEdges, self.listFaces)
         self.createWallHeight(object)
     
     # Defines the position of the point internal of the wall
@@ -181,10 +181,20 @@ class WallGenerator:
             
             # Do the extrude and after deselect the vertex
             bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":(0, 0, random.uniform(self.minimalHeightWall, self.maximalHeightWall))})
+            bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":mathutils.Vector((0, 0, random.uniform(self.minimalHeightWall, self.maximalHeightWall)))})
             bpy.ops.mesh.select_all(action = 'DESELECT')
             bpy.ops.object.mode_set(mode='OBJECT')
             index += 1
-
+    
+    # Get the position for the towers
+    def getPositionBaseTowers():
+        vertices = [i for i in bpy.context.active_object.data.vertices if i.normal.z == 0]
+        numberVertices = int(len(vertices) / 2)
+        verticesReturns = []
+        for index in range(numberVertices):
+            verticesReturns.append(mathutils.Vector(((vertices[index].normal.x + vertices[index+numberVertices].normal.x) / 2, (vertices[index].normal.y + vertices[index+numberVertices].normal.y) / 2, 0)))
+        
+        return verticesReturns
 
 wall = WallGenerator()
+print (str(WallGenerator.getPositionBaseTowers()))
