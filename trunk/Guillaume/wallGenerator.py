@@ -12,14 +12,14 @@ class WallGenerator:
         self.minimalWallLenght = minimalWallLenght
         self.maximalWallLenght = maximalWallLenght
         self.widthWall = widthWall
+        self.listEdges = []
+        self.listFaces = []
         self.positionsExternalWall = []
         self.positionsInternalWall = []
-        self.positionsInternalWall.append(self.positionCenter)
         tempVector = mathutils.Vector((self.positionCenter.x + self.distance, self.positionCenter.y, 0))
-        self.positionsInternalWall.append(tempVector)
         self.createInternalWall(tempVector, random.uniform(0, self.distance * 2))
         self.createExternalWall()
-        createMesh("Test", (0,0,0), self.positionsInternalWall + self.positionsExternalWall, [], [])
+        createMesh("Test", (0,0,0), self.positionsInternalWall + self.positionsExternalWall, self.listEdges, self.listFaces)
     
     # Defines the position of the point internal of the wall
     def createInternalWall(self, initialPosition, lengthWall):
@@ -62,12 +62,12 @@ class WallGenerator:
         positionWall = mathutils.Vector((x1, y1, 0))
         
         # Verify if the position is visible by the others points
-        if self.visible2(positionWall, initialPosition, self.positionsInternalWall[0]) < 0:
+        if self.visible2(positionWall, initialPosition, self.positionCenter) < 0:
             # Change position
             positionWall = mathutils.Vector((x2, y2, 0))
         
         # Add the point
-        if len(self.positionsInternalWall) < 3 or not (self.visible2(positionWall, self.positionsInternalWall[1], self.positionsInternalWall[0]) > 0 and self.visible2(initialPosition, self.positionsInternalWall[1], self.positionsInternalWall[0]) < 0):
+        if len(self.positionsInternalWall) < 3 or not (self.visible2(positionWall, self.positionsInternalWall[0], self.positionCenter) > 0 and self.visible2(initialPosition, self.positionsInternalWall[0], self.positionCenter) < 0):
             self.positionsInternalWall.append(positionWall)
             self.createInternalWall(positionWall, random.uniform(self.minimalWallLenght, self.maximalWallLenght))
     
