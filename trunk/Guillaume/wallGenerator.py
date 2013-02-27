@@ -68,8 +68,14 @@ class WallGenerator:
         
         # Add the point
         if len(self.positionsInternalWall) < 3 or not (self.visible2(positionWall, self.positionsInternalWall[0], self.positionCenter) > 0 and self.visible2(initialPosition, self.positionsInternalWall[0], self.positionCenter) < 0):
+            # Do the edges
+            if len(self.positionsInternalWall) > 0:
+                self.listEdges.append((len(self.positionsInternalWall) - 1, len(self.positionsInternalWall)))
+            
             self.positionsInternalWall.append(positionWall)
             self.createInternalWall(positionWall, random.uniform(self.minimalWallLenght, self.maximalWallLenght))
+        else:
+            self.listEdges.append((len(self.positionsInternalWall) - 1, 0))
     
     # Defines the visibility of a point
     def visible2(self, vertex, previousVertex, previousPreviousVertex):
@@ -82,6 +88,7 @@ class WallGenerator:
     
     # Defines the position of the point internal of the wall
     def createExternalWall(self):
+        index = 0
         for pos in self.positionsInternalWall:
             if not (pos.x == self.positionCenter.x and pos.y == self.positionCenter.y):
                 H = (pos.x - self.positionCenter.x) ** 2
@@ -89,6 +96,13 @@ class WallGenerator:
                 y1 = x1 * (pos.y - self.positionCenter.y) / (pos.x - self.positionCenter.x)
                 x2 = - x1
                 y2 = x2 * (pos.y - self.positionCenter.y) / (pos.x - self.positionCenter.x)
+                
+                # Do the edges
+                # Edges between external vertex
+                if len(self.positionsExternalWall) > 0:
+                    self.listEdges.append((len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1, len(self.positionsInternalWall) + len(self.positionsExternalWall)))
+                # Edges between internal and external vertex
+                self.listEdges.append((index, len(self.positionsInternalWall) + len(self.positionsExternalWall)))
                 
                 if self.positionCenter.x > pos.x:
                     if self.positionCenter.y > pos.y:
@@ -133,5 +147,8 @@ class WallGenerator:
                             self.positionsExternalWall.append(mathutils.Vector((x1, y1, 0)))
                         else:
                             self.positionsExternalWall.append(mathutils.Vector((x2, y2, 0)))
+            index += 1
+        # Add the last edges
+        self.listEdges.append((len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1, len(self.positionsInternalWall)))
     
 wall = WallGenerator()
