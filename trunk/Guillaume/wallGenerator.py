@@ -6,12 +6,14 @@ from utils import *
 
 # Class WallGenerator
 class WallGenerator:
-    def __init__(self, positionX=0, positionY=0, distance=20, minimalWallLenght=5, maximalWallLenght=8, widthWall=2):
+    def __init__(self, positionX=0, positionY=0, distance=20, minimalWallLenght=20, maximalWallLenght=26, widthWall=4, minimalHeightWall=10, maximalHeightWall=15):
         self.positionCenter = mathutils.Vector((positionX, positionY, 0))
         self.distance = distance
         self.minimalWallLenght = minimalWallLenght
         self.maximalWallLenght = maximalWallLenght
         self.widthWall = widthWall
+        self.minimalHeightWall = minimalHeightWall
+        self.maximalHeightWall = maximalHeightWall
         self.listEdges = []
         self.listFaces = []
         self.positionsExternalWall = []
@@ -19,7 +21,8 @@ class WallGenerator:
         tempVector = mathutils.Vector((self.positionCenter.x + self.distance, self.positionCenter.y, 0))
         self.createInternalWall(tempVector, random.uniform(0, self.distance * 2))
         self.createExternalWall()
-        createMesh("Test", (0,0,0), self.positionsInternalWall + self.positionsExternalWall, self.listEdges, self.listFaces)
+        object = createMesh("Test", (0,0,0), self.positionsInternalWall + self.positionsExternalWall, self.listEdges, self.listFaces)
+        self.createWallHeight(object)
     
     # Defines the position of the point internal of the wall
     def createInternalWall(self, initialPosition, lengthWall):
@@ -158,6 +161,30 @@ class WallGenerator:
         self.listEdges.append((len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1, index - 1))
         # Add the last faces
         self.listFaces.append((index - 1, 0, index, len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1))
-                
     
+    # Create the wall height
+    def createWallHeight(self, object):
+        # Active the object
+        object.select = True
+        bpy.context.scene.objects.active = object
+        
+        # Deselect all vertex
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        bpy.ops.object.mode_set(mode='OBJECT')
+        
+        index = 0
+        for face in self.listFaces:
+            # Select the vertex of a face
+            for vertex in object.data.polygons[index].vertices:
+                bpy.context.active_object.data.vertices[vertex].select = True
+            
+            # Do the extrude and after deselect the vertex
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":(0, 0, random.uniform(self.minimalHeightWall, self.maximalHeightWall))})
+            bpy.ops.mesh.select_all(action = 'DESELECT')
+            bpy.ops.object.mode_set(mode='OBJECT')
+            index += 1
+
+
 wall = WallGenerator()
