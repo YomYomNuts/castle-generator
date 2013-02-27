@@ -6,8 +6,8 @@ from utils import *
 
 # Class WallGenerator
 class WallGenerator:
-    def __init__(self, positionX=0, positionY=0, distance=20, minimalWallLenght=20, maximalWallLenght=26, widthWall=4, minimalHeightWall=10, maximalHeightWall=15):
-        self.positionCenter = mathutils.Vector((positionX, positionY, 0))
+    def __init__(self, positionCenter=mathutils.Vector((0, 0, 0)), distance=20, minimalWallLenght=20, maximalWallLenght=26, widthWall=4, minimalHeightWall=10, maximalHeightWall=15):
+        self.positionCenter = positionCenter
         self.distance = distance
         self.minimalWallLenght = minimalWallLenght
         self.maximalWallLenght = maximalWallLenght
@@ -195,6 +195,3 @@ class WallGenerator:
             verticesReturns.append(mathutils.Vector(((vertices[index].normal.x + vertices[index+numberVertices].normal.x) / 2, (vertices[index].normal.y + vertices[index+numberVertices].normal.y) / 2, 0)))
         
         return verticesReturns
-
-wall = WallGenerator()
-print (str(WallGenerator.getPositionBaseTowers()))
