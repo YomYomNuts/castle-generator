@@ -206,4 +206,9 @@ class WallGenerator:
             vertex = mathutils.Vector(((vertices[index].co.x + vertices[index+numberVertices].co.x) / 2, (vertices[index].co.y + vertices[index+numberVertices].co.y) / 2, 0))
             verticesReturns.append(vertex)
         
+        # Deselect all vertex
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        bpy.ops.object.mode_set(mode='OBJECT')
+        
         return verticesReturns
