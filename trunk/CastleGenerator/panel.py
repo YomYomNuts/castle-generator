@@ -89,11 +89,12 @@ class OBJECT_OT_GenerateTowers(bpy.types.Operator):
             positionTowers = WallGenerator.getPositionBaseTowers()
             index = 0
             for pos in positionTowers:
-                #if index == 0:
-                    Tower(pos, castlegenerator.lodTower, castlegenerator.radiusTower, castlegenerator.heightBodyTower, castlegenerator.heightBaseTower, castlegenerator.offsetBaseTower, castlegenerator.heightWallTower)
-                #else:
-                #    bpy.ops.object.duplicate_move(TRANSFORM_OT_translate={"value":pos})
-                #index += 1
+                if index == 0:
+                    Tower(pos, castlegenerator.lodTower, castlegenerator.radiusTower, castlegenerator.heightBodyTower, castlegenerator.heightBaseTower, castlegenerator.offsetBaseTower, castlegenerator.heightWallTower, castlegenerator.heightRempartTower, castlegenerator.offsetRempartTower)
+                else:
+                    bpy.ops.object.duplicate_move(TRANSFORM_OT_translate={"value":(0,0,0)})
+                    bpy.context.active_object.location = pos
+                index += 1
         else:
             print("No wall selected!!")
         return{'FINISHED'}
