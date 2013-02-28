@@ -188,10 +188,22 @@ class WallGenerator:
     
     # Get the position for the towers
     def getPositionBaseTowers():
-        vertices = [i for i in bpy.context.active_object.data.vertices if i.normal.z == 0]
+        # Deselect all vertex
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        bpy.ops.object.mode_set(mode='OBJECT')
+        
+        # Select all the vertices of the wall where z == 0
+        vertices = []
+        for vertex in bpy.context.active_object.data.vertices:
+            if vertex.co.z == 0:
+                vertex.select = True
+                vertices.append(vertex)
+        
         numberVertices = int(len(vertices) / 2)
         verticesReturns = []
         for index in range(numberVertices):
-            verticesReturns.append(mathutils.Vector(((vertices[index].normal.x + vertices[index+numberVertices].normal.x) / 2, (vertices[index].normal.y + vertices[index+numberVertices].normal.y) / 2, 0)))
+            vertex = mathutils.Vector(((vertices[index].co.x + vertices[index+numberVertices].co.x) / 2, (vertices[index].co.y + vertices[index+numberVertices].co.y) / 2, 0))
+            verticesReturns.append(vertex)
         
         return verticesReturns

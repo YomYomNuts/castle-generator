@@ -1,7 +1,7 @@
 import bpy
 from bpy.props import *
 from wallGenerator import *
-#from tower import *
+from tower import *
 
 bl_info = {
     "name": "Castle Generator",
@@ -15,13 +15,23 @@ bl_info = {
     }
 
 class propertiesCastleGenerator(bpy.types.PropertyGroup):
-    positionCenter = bpy.props.FloatVectorProperty(name="Central position castle", description="Central position of the castle")
-    distanceFirstWall = bpy.props.IntProperty(name="Distance first wall", description="Distance between the first wall and the central position", default=20)
-    minimalWallLenghtFirst = bpy.props.IntProperty(name="Minimal lenght first wall", description="Minimal lenght of the first wall", default=20)
-    maximalWallLenghtFirst = bpy.props.IntProperty(name="Maximal lenght first wall", description="Maximal lenght of the first wall", default=26)
-    widthWallFirst = bpy.props.IntProperty(name="Width first wall", description="Width of the first wall", default=4)
-    minimalHeightWallFirst = bpy.props.IntProperty(name="Minimal height first wall", description="Minimal height of the first wall", default=10)
-    maximalHeightWallFirst = bpy.props.IntProperty(name="Maximal height first wall", description="Maximal height of the first wall", default=15)
+    # Walls
+    positionCenter = bpy.props.FloatVectorProperty(name="Central position castle", description="Central position of the castle", subtype="XYZ")
+    distanceFirstWall = bpy.props.IntProperty(name="Distance first wall", description="Distance between the first wall and the central position", default=300)
+    minimalWallLenghtFirst = bpy.props.IntProperty(name="Minimal lenght first wall", description="Minimal lenght of the first wall", default=171)
+    maximalWallLenghtFirst = bpy.props.IntProperty(name="Maximal lenght first wall", description="Maximal lenght of the first wall", default=171)
+    widthWallFirst = bpy.props.IntProperty(name="Width first wall", description="Width of the first wall", default=5)
+    minimalHeightWallFirst = bpy.props.IntProperty(name="Minimal height first wall", description="Minimal height of the first wall", default=100)
+    maximalHeightWallFirst = bpy.props.IntProperty(name="Maximal height first wall", description="Maximal height of the first wall", default=100)
+    
+    # Towers
+    lodTower = bpy.props.IntProperty(name="Number vertices", description="Number vertices of the base of tower", default=16)
+    radiusTower = bpy.props.IntProperty(name="Size Tower", description="Size of the base of tower", default=20)
+    heightBodyTower = bpy.props.IntProperty(name="Height body tower", description="Height tower until ramparts", default=100)
+    heightBaseTower = bpy.props.IntProperty(name="Height curve", description="Height curve", default=4)
+    offsetBaseTower = bpy.props.IntProperty(name="Offset curve", description="Offset of the curve", default=2)
+    heightWallTower = bpy.props.IntProperty(name="Height wall tower", description="Height tower between ramparts and roof", default=20)
+
 
 class panelCastleGenerator(bpy.types.Panel):
     bl_label = "Castle Generator"
@@ -47,6 +57,12 @@ class panelCastleGenerator(bpy.types.Panel):
         layout.label("Towers", icon='ACTION')
         row = layout.row()
         box = row.box()
+        box.prop(castlegenerator, 'lodTower')
+        box.prop(castlegenerator, 'radiusTower')
+        box.prop(castlegenerator, 'heightBodyTower')
+        box.prop(castlegenerator, 'heightBaseTower')
+        box.prop(castlegenerator, 'offsetBaseTower')
+        box.prop(castlegenerator, 'heightWallTower')
         box.operator("castlegenerator.generatetowers", text="Generate towers", icon="PINNED")
 
 
@@ -55,7 +71,7 @@ class OBJECT_OT_GenerateWalls(bpy.types.Operator):
     bl_label = "Generate walls"
     def execute(self, context):
         castlegenerator = bpy.context.window_manager.castlegenerator
-        wall = WallGenerator()
+        wall = WallGenerator(castlegenerator.positionCenter, castlegenerator.distanceFirstWall, castlegenerator.minimalWallLenghtFirst, castlegenerator.maximalWallLenghtFirst, castlegenerator.widthWallFirst, castlegenerator.minimalHeightWallFirst, castlegenerator.maximalHeightWallFirst)
         return{'FINISHED'}
 
 class OBJECT_OT_GenerateTowers(bpy.types.Operator):
@@ -63,7 +79,9 @@ class OBJECT_OT_GenerateTowers(bpy.types.Operator):
     bl_label = "Generate towers"
     def execute(self, context):
         castlegenerator = bpy.context.window_manager.castlegenerator
-        WallGenerator.getPositionBaseTowers()
+        positionTowers = WallGenerator.getPositionBaseTowers()
+        for pos in positionTowers:
+            Tower(pos, castlegenerator.lodTower, castlegenerator.radiusTower, castlegenerator.heightBodyTower, castlegenerator.heightBaseTower, castlegenerator.offsetBaseTower, castlegenerator.heightWallTower)
         return{'FINISHED'}
 
 
