@@ -211,4 +211,8 @@ class WallGenerator:
         bpy.ops.mesh.select_all(action = 'DESELECT')
         bpy.ops.object.mode_set(mode='OBJECT')
         
+        # Active the object
+        bpy.context.active_object.select = False
+        bpy.context.scene.objects.active = None
+        
         return verticesReturns
