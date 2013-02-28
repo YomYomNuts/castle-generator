@@ -31,6 +31,8 @@ class propertiesCastleGenerator(bpy.types.PropertyGroup):
     heightBaseTower = bpy.props.IntProperty(name="Height curve", description="Height curve", default=4)
     offsetBaseTower = bpy.props.IntProperty(name="Offset curve", description="Offset of the curve", default=2)
     heightWallTower = bpy.props.IntProperty(name="Height wall tower", description="Height tower between ramparts and roof", default=20)
+    heightRempartTower = bpy.props.IntProperty(name="Height rampart tower", description="Height ramparts of tower", default=50)
+    offsetRempartTower = bpy.props.IntProperty(name="Offset rampart tower", description="Offset ramparts of tower", default=30)
 
 
 class panelCastleGenerator(bpy.types.Panel):
@@ -41,6 +43,7 @@ class panelCastleGenerator(bpy.types.Panel):
         layout = self.layout
         castlegenerator = bpy.context.window_manager.castlegenerator
         
+        # Wall
         layout.label("Wall", icon='ACTION')
         row = layout.row()
         box = row.box()
@@ -54,6 +57,7 @@ class panelCastleGenerator(bpy.types.Panel):
         box.operator("castlegenerator.generatewalls", text="Generate walls", icon="MESH_CUBE")
         layout.row()
         
+        # Tower
         layout.label("Towers", icon='ACTION')
         row = layout.row()
         box = row.box()
@@ -63,6 +67,8 @@ class panelCastleGenerator(bpy.types.Panel):
         box.prop(castlegenerator, 'heightBaseTower')
         box.prop(castlegenerator, 'offsetBaseTower')
         box.prop(castlegenerator, 'heightWallTower')
+        box.prop(castlegenerator, 'heightRempartTower')
+        box.prop(castlegenerator, 'offsetRempartTower')
         box.operator("castlegenerator.generatetowers", text="Generate towers", icon="PINNED")
 
 
@@ -79,9 +85,17 @@ class OBJECT_OT_GenerateTowers(bpy.types.Operator):
     bl_label = "Generate towers"
     def execute(self, context):
         castlegenerator = bpy.context.window_manager.castlegenerator
-        positionTowers = WallGenerator.getPositionBaseTowers()
-        for pos in positionTowers:
-            Tower(pos, castlegenerator.lodTower, castlegenerator.radiusTower, castlegenerator.heightBodyTower, castlegenerator.heightBaseTower, castlegenerator.offsetBaseTower, castlegenerator.heightWallTower)
+        if bpy.context.active_object != None:
+            positionTowers = WallGenerator.getPositionBaseTowers()
+            index = 0
+            for pos in positionTowers:
+                #if index == 0:
+                    Tower(pos, castlegenerator.lodTower, castlegenerator.radiusTower, castlegenerator.heightBodyTower, castlegenerator.heightBaseTower, castlegenerator.offsetBaseTower, castlegenerator.heightWallTower)
+                #else:
+                #    bpy.ops.object.duplicate_move(TRANSFORM_OT_translate={"value":pos})
+                #index += 1
+        else:
+            print("No wall selected!!")
         return{'FINISHED'}
 
 
