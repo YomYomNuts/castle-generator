@@ -201,10 +201,10 @@ class Tower :
 		obj.rotation_euler[2] = math.pi * 2 * (3 / lod)
 		
 		# JOIN Everything
-		self.object.select = True
 		for ob in remparts :
 			ob.select = True
 		for ob in planches :
 			ob.select = True
+		self.object.select = True
 			
 		bpy.ops.object.join()
