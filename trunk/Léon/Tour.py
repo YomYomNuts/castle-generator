@@ -69,15 +69,8 @@ def bevelCircle(n, lod):
 class Tour :
 	object = []
 	mesh = []
-	def __init__(self, position):
-		lod = 16
-		radius = 20
-		heightBody = 100
-		heightBase = 4
-		offsetBase = 2
-		heightRempart = 5
-		offsetRempart = 5
-		heightWall = 20
+	
+	def __init__(self, position, lod=16, radius=20, heightBody=100, heightBase=4, offsetBase=2, heightWall = 20, heightRempart = 50, offsetRempart = 30, subdivision = 6):
 		
 		# Create first circle
 		self.object = createCircle(position, lod, radius)
@@ -107,7 +100,6 @@ class Tour :
 		# Scale
 		bpy.ops.transform.resize(value=(scaleBase, scaleBase, 1))
 		# Subdivise body
-		subdivision = 6
 		for sub in range(subdivision) :
 			bpy.ops.mesh.extrude_region_move(MESH_OT_extrude_region={"mirror":False}, TRANSFORM_OT_translate={"value":\
 				(0, 0, heightBody / subdivision)})
@@ -118,7 +110,7 @@ class Tour :
 		bpy.ops.mesh.extrude_region_move(MESH_OT_extrude_region={"mirror":False}, TRANSFORM_OT_translate={"value":\
 			(0, 0, heightRempart * 0.3)})
 		# Scale
-		scaleRempart = 1.5
+		scaleRempart = (radius + offsetRempart) / radius
 		bpy.ops.transform.resize(value=(scaleRempart, scaleRempart, 1))
 		# Extrude
 		bpy.ops.mesh.extrude_region_move(MESH_OT_extrude_region={"mirror":False}, TRANSFORM_OT_translate={"value":\
@@ -182,14 +174,14 @@ class Tour :
 		
 		# REMPART #
 		copyObject("Rempart")
-		spinObject(lod, radius, positionGround, 0)
+		spinObject(lod, radius + offsetRempart * 0.5 - 1, positionGround, 0)
 		
 		# Setup context
 		bpy.ops.object.select_all(action='DESELECT')
 		
 		# PLANCHES #
 		copyObject("Planches")
-		spinObject(lod, radius - 1, positionGround, 0.5)
+		spinObject(lod, radius + offsetRempart * 0.5 - 1, positionGround, 0.5)
 		
 		# DOOR #
 		copyObject("Door")
