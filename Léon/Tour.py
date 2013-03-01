@@ -33,9 +33,11 @@ def copyObject(name):
 
 # Duplicate active object around a circle
 def spinObject(lod, radius, position, offset):
+	objects = []
 	for i in range(lod) :
 		# Refresh
 		obj = bpy.context.active_object
+		objects.append(obj)
 		# Position
 		obj.location = \
 			(position.x + math.cos(math.pi * 2 * (i / lod + offset * 1/lod)) * radius, \
@@ -45,6 +47,7 @@ def spinObject(lod, radius, position, offset):
 		obj.rotation_euler[2] = math.pi * 2 * (i / lod + offset * 1/lod)
 		# Duplicate
 		bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0,0,0)})
+	return objects
 
 # Bevel edges where 'n' is the index of a vertices and 'lod' the vertices length of a circle
 def bevelCircle(n, lod):
@@ -66,7 +69,7 @@ def bevelCircle(n, lod):
 		bpy.ops.mesh.select_all(action = 'DESELECT')
 		bpy.ops.object.mode_set(mode='OBJECT')
 	
-class Tour :
+class Tower :
 	object = []
 	mesh = []
 	
@@ -174,14 +177,16 @@ class Tour :
 		
 		# REMPART #
 		copyObject("Rempart")
-		spinObject(lod, radius + offsetRempart * 0.5 - 1, positionGround, 0)
+		remparts = []
+		remparts = spinObject(lod, radius + offsetRempart * 0.5 - 1, positionGround, 0)
 		
 		# Setup context
 		bpy.ops.object.select_all(action='DESELECT')
 		
 		# PLANCHES #
 		copyObject("Planches")
-		spinObject(lod, radius + offsetRempart * 0.5 - 1, positionGround, 0.5)
+		planches = []
+		planches = spinObject(lod, radius + offsetRempart * 0.5 - 1, positionGround, 0.5)
 		
 		# DOOR #
 		copyObject("Door")
@@ -195,5 +200,14 @@ class Tour :
 		# Orientation
 		obj.rotation_euler[2] = math.pi * 2 * (3 / lod)
 		
+		# JOIN Everything
+		self.object.select = True
+		for ob in remparts :
+			ob.select = True
+		for ob in planches :
+			ob.select = True
+			
+		bpy.ops.object.join()
+		
 # Main
-tour = Tour((5,5,0))
+tour = Tower((5,5,0))
