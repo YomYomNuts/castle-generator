@@ -68,7 +68,6 @@ class CrenelGenerator:
         listIndexVerticesCreated = self.createLowWall()
         self.createCrenelMerlon(listIndexVerticesCreated)
     
-    
     def createLowWall(self):
         # Select the vertices
         bpy.ops.object.mode_set(mode='EDIT')
@@ -239,7 +238,6 @@ class CrenelGenerator:
             
             index += 1
     
-    
     def calculateVerticesCrenelMerlon(self, firstVertex, lastVertex, length1, length2):
         listVertices = []
         previousVertex = firstVertex
@@ -268,6 +266,8 @@ class CrenelGenerator:
         return listVertices
 
 # Main
-objects = [obj for obj in bpy.context.scene.objects if obj.select]
+#objects = [obj for obj in bpy.context.scene.objects if obj.select]
 #WallGenerator(objects[0], objects[1])
-CrenelGenerator(objects[0])
+#CrenelGenerator(objects[0], 1)
+#CrenelGenerator(objects[0], 2)
+#CrenelGenerator(objects[0], 3)

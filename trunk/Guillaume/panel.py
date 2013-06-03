@@ -16,13 +16,18 @@ bl_info = {
 
 class propertiesCastleGenerator(bpy.types.PropertyGroup):
     # Walls
-    positionCenter = bpy.props.FloatVectorProperty(name="Central position castle", description="Central position of the castle", subtype="XYZ")
-    distanceFirstWall = bpy.props.IntProperty(name="Distance first wall", description="Distance between the first wall and the central position", default=300)
-    minimalWallLenghtFirst = bpy.props.IntProperty(name="Minimal lenght first wall", description="Minimal lenght of the first wall", default=171)
-    maximalWallLenghtFirst = bpy.props.IntProperty(name="Maximal lenght first wall", description="Maximal lenght of the first wall", default=171)
-    widthWallFirst = bpy.props.IntProperty(name="Width first wall", description="Width of the first wall", default=5)
-    minimalHeightWallFirst = bpy.props.IntProperty(name="Minimal height first wall", description="Minimal height of the first wall", default=100)
-    maximalHeightWallFirst = bpy.props.IntProperty(name="Maximal height first wall", description="Maximal height of the first wall", default=100)
+    wallWidth = bpy.props.FloatProperty(name="Width of wall", description="Width of wall", default=3)
+    wallHeight = bpy.props.FloatProperty(name="Height of wall", description="Height of wall", default=5)
+    
+	# Crenels
+    indexVertexGroup = bpy.props.IntProperty(name="Index edges", description="Index edges", default=3)
+    lowWallHeight = bpy.props.FloatProperty(name="Height low wall", description="Height of low wall", default=1)
+    lowWallWidth = bpy.props.FloatProperty(name="Width low wall", description="Width of low wall", default=0.5)
+    beginByCrenel = bpy.props.BoolProperty(name="Begin by crenel", description="Begin by a crenel", default=True)
+    inverseSensCreation = bpy.props.BoolProperty(name="Inverse sens creation", description="Inverse the sens of creation", default=False)
+    crenelLength = bpy.props.FloatProperty(name="Length crenel", description="Length of crenel", default=0.4)
+    merlonLength = bpy.props.FloatProperty(name="Length merlon", description="Length of merlon", default=0.6)
+    merlonHeight = bpy.props.FloatProperty(name="Height merlon", description="Height of merlon", default=0.5)
     
     # Towers
     lodTower = bpy.props.IntProperty(name="Number vertices", description="Number vertices of the base of tower", default=16)
@@ -42,34 +47,45 @@ class panelCastleGenerator(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         castlegenerator = bpy.context.window_manager.castlegenerator
-        
-        # Wall
-        layout.label("Wall", icon='ACTION')
-        row = layout.row()
-        box = row.box()
-        box.prop(castlegenerator, 'positionCenter')
-        box.prop(castlegenerator, 'distanceFirstWall')
-        box.prop(castlegenerator, 'minimalWallLenghtFirst')
-        box.prop(castlegenerator, 'maximalWallLenghtFirst')
-        box.prop(castlegenerator, 'widthWallFirst')
-        box.prop(castlegenerator, 'minimalHeightWallFirst')
-        box.prop(castlegenerator, 'maximalHeightWallFirst')
-        box.operator("castlegenerator.generatewalls", text="Generate walls", icon="MESH_CUBE")
-        layout.row()
-        
-        # Tower
-        layout.label("Towers", icon='ACTION')
-        row = layout.row()
-        box = row.box()
-        box.prop(castlegenerator, 'lodTower')
-        box.prop(castlegenerator, 'radiusTower')
-        box.prop(castlegenerator, 'heightBodyTower')
-        box.prop(castlegenerator, 'heightBaseTower')
-        box.prop(castlegenerator, 'offsetBaseTower')
-        box.prop(castlegenerator, 'heightWallTower')
-        box.prop(castlegenerator, 'heightRempartTower')
-        box.prop(castlegenerator, 'offsetRempartTower')
-        box.operator("castlegenerator.generatetowers", text="Generate towers", icon="PINNED")
+        objects = [obj for obj in bpy.context.scene.objects if obj.select]
+		
+        if len(objects) == 2 and objects[0] != None and objects[1] != None:
+            # Wall
+            layout.label("Wall", icon='ACTION')
+            row = layout.row()
+            box = row.box()
+            box.prop(castlegenerator, 'wallWidth')
+            box.prop(castlegenerator, 'wallHeight')
+            box.operator("castlegenerator.generatewalls", text="Generate walls", icon="MESH_CUBE")
+            layout.row()
+        elif len(objects) == 1 and objects[0] != None:
+            # Crenel
+            layout.label("Crenels", icon='ACTION')
+            row = layout.row()
+            box = row.box()
+            box.prop(castlegenerator, 'indexVertexGroup')
+            box.prop(castlegenerator, 'lowWallHeight')
+            box.prop(castlegenerator, 'lowWallWidth')
+            box.prop(castlegenerator, 'beginByCrenel')
+            box.prop(castlegenerator, 'inverseSensCreation')
+            box.prop(castlegenerator, 'crenelLength')
+            box.prop(castlegenerator, 'merlonLength')
+            box.prop(castlegenerator, 'merlonHeight')
+            box.operator("castlegenerator.generatecrenels", text="Generate crenels", icon="PINNED")
+        else:
+            # Tower
+            layout.label("Towers", icon='ACTION')
+            row = layout.row()
+            box = row.box()
+            box.prop(castlegenerator, 'lodTower')
+            box.prop(castlegenerator, 'radiusTower')
+            box.prop(castlegenerator, 'heightBodyTower')
+            box.prop(castlegenerator, 'heightBaseTower')
+            box.prop(castlegenerator, 'offsetBaseTower')
+            box.prop(castlegenerator, 'heightWallTower')
+            box.prop(castlegenerator, 'heightRempartTower')
+            box.prop(castlegenerator, 'offsetRempartTower')
+            box.operator("castlegenerator.generatetowers", text="Generate towers", icon="PINNED")
 
 
 class OBJECT_OT_GenerateWalls(bpy.types.Operator):
@@ -77,8 +93,24 @@ class OBJECT_OT_GenerateWalls(bpy.types.Operator):
     bl_label = "Generate walls"
     def execute(self, context):
         castlegenerator = bpy.context.window_manager.castlegenerator
-        wall = WallGenerator(castlegenerator.positionCenter, castlegenerator.distanceFirstWall, castlegenerator.minimalWallLenghtFirst, castlegenerator.maximalWallLenghtFirst, castlegenerator.widthWallFirst, castlegenerator.minimalHeightWallFirst, castlegenerator.maximalHeightWallFirst)
+        objects = [obj for obj in bpy.context.scene.objects if obj.select]
+		
+        if len(objects) == 2 and objects[0] != None and objects[1] != None:
+            WallGenerator(objects[0], objects[1], castlegenerator.wallWidth, castlegenerator.wallHeight)
         return{'FINISHED'}
+
+
+class OBJECT_OT_GenerateCrenels(bpy.types.Operator):
+    bl_idname = "castlegenerator.generatecrenels"
+    bl_label = "Generate crenels"
+    def execute(self, context):
+        castlegenerator = bpy.context.window_manager.castlegenerator
+        objects = [obj for obj in bpy.context.scene.objects if obj.select]
+		
+        if len(objects) == 1 and objects[0] != None:
+            CrenelGenerator(objects[0], castlegenerator.indexVertexGroup, castlegenerator.lowWallHeight, castlegenerator.lowWallWidth, castlegenerator.beginByCrenel, castlegenerator.inverseSensCreation, castlegenerator.crenelLength, castlegenerator.merlonLength, castlegenerator.merlonHeight)
+        return{'FINISHED'}
+
 
 class OBJECT_OT_GenerateTowers(bpy.types.Operator):
     bl_idname = "castlegenerator.generatetowers"
@@ -100,7 +132,7 @@ class OBJECT_OT_GenerateTowers(bpy.types.Operator):
         return{'FINISHED'}
 
 
-classes = [propertiesCastleGenerator, panelCastleGenerator, OBJECT_OT_GenerateWalls, OBJECT_OT_GenerateTowers]
+classes = [propertiesCastleGenerator, panelCastleGenerator, OBJECT_OT_GenerateWalls, OBJECT_OT_GenerateCrenels, OBJECT_OT_GenerateTowers]
 
 def register():
     for c in classes:
