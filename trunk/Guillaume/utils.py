@@ -36,7 +36,6 @@ def createFace(object, listIndexVertice):
     object.data.polygons[-1].loop_total = len(listIndexVertice)
     object.data.polygons[-1].vertices = listIndexVertice
 
-
 # Defines the position of intersection into a circle and a line
 def intersectionCircleLine(pointLinePosition, centreCirclePosition, radiusCircle):
     if pointLinePosition.x <= centreCirclePosition.x + 0.0000001 and pointLinePosition.x >= centreCirclePosition.x - 0.0000001:
