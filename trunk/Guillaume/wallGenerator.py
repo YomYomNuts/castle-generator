@@ -84,22 +84,14 @@ class CrenelGenerator:
             
             # Take the vertex reference
             vertexReference = mathutils.Vector((0, 0, 0))
-            if indexVertex == 2 and self.indexVertexGroup == 0:
+            if (indexVertex == 2 and self.indexVertexGroup == 0) or (indexVertex == 7 and self.indexVertexGroup == 3):
                 vertexReference = self.object.data.vertices[3].co
-            elif indexVertex == 2 and self.indexVertexGroup == 2:
+            elif (indexVertex == 2 and self.indexVertexGroup == 2) or (indexVertex == 7 and self.indexVertexGroup == 1):
                 vertexReference = self.object.data.vertices[6].co
-            elif indexVertex == 3 and self.indexVertexGroup == 1:
+            elif (indexVertex == 3 and self.indexVertexGroup == 1) or (indexVertex == 6 and self.indexVertexGroup == 3):
                 vertexReference = self.object.data.vertices[2].co
-            elif indexVertex == 3 and self.indexVertexGroup == 2:
+            elif (indexVertex == 3 and self.indexVertexGroup == 2) or (indexVertex == 6 and self.indexVertexGroup == 0):
                 vertexReference = self.object.data.vertices[7].co
-            elif indexVertex == 6 and self.indexVertexGroup == 0:
-                vertexReference = self.object.data.vertices[7].co
-            elif indexVertex == 6 and self.indexVertexGroup == 3:
-                vertexReference = self.object.data.vertices[2].co
-            elif indexVertex == 7 and self.indexVertexGroup == 1:
-                vertexReference = self.object.data.vertices[6].co
-            elif indexVertex == 7 and self.indexVertexGroup == 3:
-                vertexReference = self.object.data.vertices[3].co
             
             # Get the vertice of intersection
             verticesObject = intersectionCircleLine(vertexReference, self.object.data.vertices[indexVertex].co, self.lowWallWidth)
@@ -124,13 +116,17 @@ class CrenelGenerator:
         
         # Define utils variables
         listVertice = [verticesIndex[1], self.object.data.vertices[-1].index, self.object.data.vertices[-2].index, verticesIndex[0]]
-        listIndexVerticesCreated = [self.object.data.vertices[-2].index, self.object.data.vertices[-1].index]
         
         # Do the extrude
+        listIndexVerticesCreated = []
         if self.lowWallHeight > 0:
-            manualExtrude(self.object, listVertice, mathutils.Vector((0, 0, self.lowWallHeight)))
+            listIndexVerticesCreated = manualExtrude(self.object, listVertice, mathutils.Vector((0, 0, self.lowWallHeight)))
+            
+        listIndexVertices = []
+        if len(listIndexVerticesCreated) > 3:
+            listIndexVertices = [listIndexVerticesCreated[3], listIndexVerticesCreated[0], listIndexVerticesCreated[2], listIndexVerticesCreated[1]]
         
-        return listIndexVerticesCreated
+        return listIndexVertices
     
     def createCrenelMerlon(self, listIndexVerticesLowWall):
         # Select the vertices
@@ -140,18 +136,6 @@ class CrenelGenerator:
         bpy.ops.object.vertex_group_select()
         bpy.ops.object.mode_set(mode='OBJECT')
         verticesSelected = [vertexSearch for vertexSearch in self.object.data.vertices if vertexSearch.select == True]
-        
-        # Take the vertices are in the top of the low wall
-        vertexTopLowWall = [-1, -1, -1, -1]
-        for vertex in self.object.data.vertices:
-            if compareTwoCoVertex(vertex.co, (verticesSelected[0].co[0], verticesSelected[0].co[1], verticesSelected[0].co[2] + self.lowWallHeight)):
-                vertexTopLowWall[0] = vertex.index
-            if compareTwoCoVertex(vertex.co, (verticesSelected[1].co[0], verticesSelected[1].co[1], verticesSelected[1].co[2] + self.lowWallHeight)):
-                vertexTopLowWall[1] = vertex.index
-            if compareTwoCoVertex(vertex.co, (self.object.data.vertices[listIndexVerticesLowWall[0]].co[0], self.object.data.vertices[listIndexVerticesLowWall[0]].co[1], self.object.data.vertices[listIndexVerticesLowWall[0]].co[2] + self.lowWallHeight)):
-                vertexTopLowWall[2] = vertex.index
-            if compareTwoCoVertex(vertex.co, (self.object.data.vertices[listIndexVerticesLowWall[1]].co[0], self.object.data.vertices[listIndexVerticesLowWall[1]].co[1], self.object.data.vertices[listIndexVerticesLowWall[1]].co[2] + self.lowWallHeight)):
-                vertexTopLowWall[3] = vertex.index
         
         # Define the first and the second length
         if self.beginByCrenel:
@@ -164,36 +148,36 @@ class CrenelGenerator:
         # Get the first vertices of merlon and crenel
         lastVertice = []
         if self.inverseSensCreation:
-            previousFirst = vertexTopLowWall[1]
-            lastVertice.append(vertexTopLowWall[0])
-            verticesFirst = self.calculateVerticesCrenelMerlon(self.object.data.vertices[vertexTopLowWall[1]].co, self.object.data.vertices[vertexTopLowWall[0]].co, length1 , length2)
+            previousFirst = listIndexVerticesLowWall[1]
+            lastVertice.append(listIndexVerticesLowWall[0])
+            verticesFirst = self.calculateVerticesCrenelMerlon(self.object.data.vertices[listIndexVerticesLowWall[1]].co, self.object.data.vertices[listIndexVerticesLowWall[0]].co, length1 , length2)
         else:
-            previousFirst = vertexTopLowWall[0]
-            lastVertice.append(vertexTopLowWall[1])
-            verticesFirst = self.calculateVerticesCrenelMerlon(self.object.data.vertices[vertexTopLowWall[0]].co, self.object.data.vertices[vertexTopLowWall[1]].co, length1 , length2)
+            previousFirst = listIndexVerticesLowWall[0]
+            lastVertice.append(listIndexVerticesLowWall[1])
+            verticesFirst = self.calculateVerticesCrenelMerlon(self.object.data.vertices[listIndexVerticesLowWall[0]].co, self.object.data.vertices[listIndexVerticesLowWall[1]].co, length1 , length2)
         
         # Define the size of the merlon and crenel for this other side
         coefficient = length2 / length1
-        totalSize = sqrt((self.object.data.vertices[vertexTopLowWall[3]].co[0] - self.object.data.vertices[vertexTopLowWall[2]].co[0]) ** 2 + (self.object.data.vertices[vertexTopLowWall[3]].co[1] - self.object.data.vertices[vertexTopLowWall[2]].co[1]) ** 2)
+        totalSize = sqrt((self.object.data.vertices[listIndexVerticesLowWall[3]].co[0] - self.object.data.vertices[listIndexVerticesLowWall[2]].co[0]) ** 2 + (self.object.data.vertices[listIndexVerticesLowWall[3]].co[1] - self.object.data.vertices[listIndexVerticesLowWall[2]].co[1]) ** 2)
         if len(verticesFirst) % 2 == 0:
-            newLength1 = totalSize / (len(verticesFirst) / 2 + len(verticesFirst) * coefficient / 2)
+            newLength1 = totalSize / ((len(verticesFirst) + len(verticesFirst) * coefficient) / 2)
         else:
-            newLength1 = totalSize / ((len(verticesFirst) + 1) / 2 + (len(verticesFirst) + 1) * coefficient / 2)
+            newLength1 = totalSize / ((len(verticesFirst) + 1 + (len(verticesFirst) + 1) * coefficient) / 2)
         newLength2 = newLength1 * coefficient
         
         # Get the seconds vertices of merlon and crenel
         if self.inverseSensCreation:
-            previousSecond = vertexTopLowWall[3]
-            lastVertice.append(vertexTopLowWall[2])
-            verticesSecond = self.calculateVerticesCrenelMerlon(self.object.data.vertices[vertexTopLowWall[3]].co, self.object.data.vertices[vertexTopLowWall[2]].co, newLength1 , newLength2)
+            previousSecond = listIndexVerticesLowWall[3]
+            lastVertice.append(listIndexVerticesLowWall[2])
+            verticesSecond = self.calculateVerticesCrenelMerlon(self.object.data.vertices[listIndexVerticesLowWall[3]].co, self.object.data.vertices[listIndexVerticesLowWall[2]].co, newLength1 , newLength2)
         else:
-            previousSecond = vertexTopLowWall[2]
-            lastVertice.append(vertexTopLowWall[3])
-            verticesSecond = self.calculateVerticesCrenelMerlon(self.object.data.vertices[vertexTopLowWall[2]].co, self.object.data.vertices[vertexTopLowWall[3]].co, newLength1 , newLength2)
+            previousSecond = listIndexVerticesLowWall[2]
+            lastVertice.append(listIndexVerticesLowWall[3])
+            verticesSecond = self.calculateVerticesCrenelMerlon(self.object.data.vertices[listIndexVerticesLowWall[2]].co, self.object.data.vertices[listIndexVerticesLowWall[3]].co, newLength1 , newLength2)
         
         # Creation of merlon and crenel
-        index = 0
-        while index <= len(verticesSecond):
+        index = 0   
+        while index <= len(verticesFirst):
             # Deselect all the vertices
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.select_all(action = 'DESELECT')
@@ -203,7 +187,19 @@ class CrenelGenerator:
             self.object.data.vertices[previousFirst].select = True
             self.object.data.vertices[previousSecond].select = True
             
-            if index != len(verticesSecond):
+            if index == len(verticesFirst):
+                # Extend the vertices and edges
+                self.object.data.edges.add(2)
+                
+                # Add the vertices and edges
+                self.object.data.edges[-1].vertices = [previousFirst, listIndexVerticesLowWall[1]]
+                self.object.data.edges[-3].vertices = [previousSecond, listIndexVerticesLowWall[3]]
+                listVertice = [previousSecond, listIndexVerticesLowWall[3], listIndexVerticesLowWall[1], previousFirst]
+                
+                # Do the extrude if it's a merlon
+                if self.merlonHeight > 0 and ((self.beginByCrenel and index % 2 == 1) or (not (self.beginByCrenel) and index % 2 == 0)):
+                    manualExtrude(self.object, listVertice, mathutils.Vector((0, 0, self.merlonHeight)))
+            elif index != len(verticesSecond):
                 # Extend the vertices and edges
                 self.object.data.vertices.add(2)
                 self.object.data.edges.add(3)
@@ -268,6 +264,7 @@ class CrenelGenerator:
 # Main
 #objects = [obj for obj in bpy.context.scene.objects if obj.select]
 #WallGenerator(objects[0], objects[1])
+#CrenelGenerator(objects[0], 0)
 #CrenelGenerator(objects[0], 1)
 #CrenelGenerator(objects[0], 2)
 #CrenelGenerator(objects[0], 3)

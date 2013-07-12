@@ -253,3 +253,4 @@ def manualExtrude(object, listIndexVertices, sizeExtrude):
     # Create the last face
     listNewIndexVertice.reverse()
     createFace(object, listNewIndexVertice)
+    return listNewIndexVertice
