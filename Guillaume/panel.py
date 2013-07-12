@@ -1,6 +1,7 @@
 import bpy
 from bpy.props import *
 from wallGenerator import *
+from groundGenerator import *
 from tower import *
 
 bl_info = {
@@ -73,9 +74,14 @@ class panelCastleGenerator(bpy.types.Panel):
             box.prop(castlegenerator, 'merlonHeight')
             box.operator("castlegenerator.generatecrenels", text="Generate crenels", icon="PINNED")
         else:
+            # Ground
+            layout.label("Ground", icon='ACTION')
+            row = layout.row()
+            box = row.box()
             # Tower
             layout.label("Towers", icon='ACTION')
             row = layout.row()
+            box.operator("castlegenerator.generateground", text="Generate ground", icon="BRUSH_ADD")
             box = row.box()
             box.prop(castlegenerator, 'lodTower')
             box.prop(castlegenerator, 'radiusTower')
@@ -112,6 +118,14 @@ class OBJECT_OT_GenerateCrenels(bpy.types.Operator):
         return{'FINISHED'}
 
 
+class OBJECT_OT_GenerateGround(bpy.types.Operator):
+    bl_idname = "castlegenerator.generateground"
+    bl_label = "Generate ground"
+    def execute(self, context):
+        GroundGenerator()
+        return{'FINISHED'}
+
+
 class OBJECT_OT_GenerateTowers(bpy.types.Operator):
     bl_idname = "castlegenerator.generatetowers"
     bl_label = "Generate towers"
@@ -132,7 +146,7 @@ class OBJECT_OT_GenerateTowers(bpy.types.Operator):
         return{'FINISHED'}
 
 
-classes = [propertiesCastleGenerator, panelCastleGenerator, OBJECT_OT_GenerateWalls, OBJECT_OT_GenerateCrenels, OBJECT_OT_GenerateTowers]
+classes = [propertiesCastleGenerator, panelCastleGenerator, OBJECT_OT_GenerateWalls, OBJECT_OT_GenerateCrenels, OBJECT_OT_GenerateGround, OBJECT_OT_GenerateTowers]
 
 def register():
     for c in classes:
