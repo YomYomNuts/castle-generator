@@ -36,8 +36,50 @@ def createFace(object, listIndexVertice):
     object.data.polygons[-1].loop_total = len(listIndexVertice)
     object.data.polygons[-1].vertices = listIndexVertice
 
-# Defines the position of intersection into a circle and a line
-def intersectionCircleLine(pointLinePosition, centreCirclePosition, radiusCircle):
+# Defines the position of intersection into a circle and a line without Z
+def intersectionCircleLineWithoutZ(pointLinePosition, centreCirclePosition, radiusCircle):
+    if pointLinePosition.x <= centreCirclePosition.x + 0.0000001 and pointLinePosition.x >= centreCirclePosition.x - 0.0000001:
+        x1 = centreCirclePosition.x
+        x2 = centreCirclePosition.x
+        y1 = centreCirclePosition.y + radiusCircle
+        y2 = centreCirclePosition.y - radiusCircle
+        z1 = centreCirclePosition.z
+        z2 = centreCirclePosition.z
+    elif pointLinePosition.y <= centreCirclePosition.y + 0.0000001 and pointLinePosition.y >= centreCirclePosition.y - 0.0000001:
+        x1 = centreCirclePosition.x + radiusCircle
+        x2 = centreCirclePosition.x - radiusCircle
+        y1 = centreCirclePosition.y
+        y2 = centreCirclePosition.y
+        z1 = centreCirclePosition.z
+        z2 = centreCirclePosition.z
+    else:
+        # y = ax + b
+        a = (pointLinePosition.y - centreCirclePosition.y) / (pointLinePosition.x - centreCirclePosition.x)
+        b = centreCirclePosition.y - a * centreCirclePosition.x
+        
+        # Ax**2 + Bx + C = 0
+        A = 1 + a ** 2
+        B = - 2 * centreCirclePosition.x + 2 * a * b - 2 * a * centreCirclePosition.y
+        C = centreCirclePosition.x ** 2 + centreCirclePosition.y ** 2 + b ** 2 - 2 * b * centreCirclePosition.y - radiusCircle ** 2
+        
+        # Determine the delta
+        delta = B ** 2 - 4 * A * C
+        
+        if delta >= 0:
+            # Get the position
+            x1 = (- B + math.sqrt(delta)) / (2 * A)
+            y1 = a * x1 + b
+            x2 = (- B - math.sqrt(delta)) / (2 * A)
+            y2 = a * x2 + b
+            z1 = centreCirclePosition.z
+            z2 = centreCirclePosition.z
+        else:
+            return (None, None)
+        
+    return (mathutils.Vector((x1, y1, z1)), mathutils.Vector((x2, y2, z2)))
+
+# Defines the position of intersection into a circle and a line with Z
+def intersectionCircleLineWithZ(pointLinePosition, centreCirclePosition, radiusCircle):
     if pointLinePosition.x <= centreCirclePosition.x + 0.0000001 and pointLinePosition.x >= centreCirclePosition.x - 0.0000001:
         x1 = centreCirclePosition.x
         x2 = centreCirclePosition.x
@@ -254,3 +296,12 @@ def manualExtrude(object, listIndexVertices, sizeExtrude):
     listNewIndexVertice.reverse()
     createFace(object, listNewIndexVertice)
     return listNewIndexVertice
+
+# Do the difference with the boolean modifier
+def doDifferenceBooleanModifier(objectApply, object):
+    modifier = objectApply.modifiers.new('',type='BOOLEAN')
+    modifier.operation = 'DIFFERENCE'
+    modifier.object = object
+    bpy.context.scene.objects.active = objectApply
+    objectApply.select = True
+    bpy.ops.object.modifier_apply(apply_as='DATA', modifier=modifier.name)

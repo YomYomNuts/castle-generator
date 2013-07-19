@@ -16,11 +16,11 @@ class WallGenerator:
     def createWall(self):
         # Do the rotation for take the good position of the intersection
         location = getPositionRotationY(self.object1.location, self.object2.location, math.pi/2)
-        verticesObject1 = intersectionCircleLine(location, self.object1.location, self.wallWidth)
+        verticesObject1 = intersectionCircleLineWithoutZ(location, self.object1.location, self.wallWidth)
         
         # Do the rotation for take the good position of the intersection
         location = getPositionRotationY(self.object2.location, self.object1.location, math.pi/2)
-        verticesObject2 = intersectionCircleLine(location, self.object2.location, self.wallWidth)
+        verticesObject2 = intersectionCircleLineWithoutZ(location, self.object2.location, self.wallWidth)
         
         # Make the wall
         if verticesObject1[0] != None and verticesObject2 != None:
@@ -94,7 +94,7 @@ class CrenelGenerator:
                 vertexReference = self.object.data.vertices[7].co
             
             # Get the vertice of intersection
-            verticesObject = intersectionCircleLine(vertexReference, self.object.data.vertices[indexVertex].co, self.lowWallWidth)
+            verticesObject = intersectionCircleLineWithZ(vertexReference, self.object.data.vertices[indexVertex].co, self.lowWallWidth)
             
             if verticesObject[0] != None and verticesObject[1] != None:
                 # Get the good vertice
@@ -247,7 +247,7 @@ class CrenelGenerator:
                 length = length2
             
             # Get the vertice of intersection
-            verticesObject = intersectionCircleLine(lastVertex, previousVertex, length)
+            verticesObject = intersectionCircleLineWithZ(lastVertex, previousVertex, length)
             
             if verticesObject[0] != None and verticesObject[1] != None:
                 # Get the good vertice
@@ -262,8 +262,8 @@ class CrenelGenerator:
         return listVertices
 
 # Main
-#objects = [obj for obj in bpy.context.scene.objects if obj.select]
-#WallGenerator(objects[0], objects[1])
+objects = [obj for obj in bpy.context.scene.objects if obj.select]
+WallGenerator(objects[0], objects[1])
 #CrenelGenerator(objects[0], 0)
 #CrenelGenerator(objects[0], 1)
 #CrenelGenerator(objects[0], 2)
