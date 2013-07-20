@@ -6,35 +6,7 @@ from utils import *
 
 # Class TowerGenerator
 class TowerGenerator:
-	def __init__(self, origin, numVerts, rad, totalHeight, crenaux, poteaux, door, rembarde, roof, etendard, stairs):
-		uvSizeCubeWood = 20.0
-		uvSizeRoof = 20.0
-		uvSizeTube = 20.0
-		uvSizeCube = 0.4
-		
-		brick = os.path.join(os.path.dirname(bpy.data.filepath), 'BrickOldSharp0264_23_S.jpg')
-		realpathbrick = os.path.expanduser(brick)
-		try:
-			imgbrick = bpy.data.images.load(realpathbrick)
-		except:
-			raise NameError("Cannot load image %s" % realpathbrick)
-		
-		# Create image texture from image
-		cTex = bpy.data.textures.new('BrickTexture', type = 'IMAGE')
-		cTex.image = imgbrick
-		matCube = bpy.data.materials.new('MaterialCube')
-		
-		# Add texture slot for color texture
-		mtex = matCube.texture_slots.add()
-		mtex.texture = cTex
-		mtex.texture_coords = 'GLOBAL'
-		mtex.mapping = 'CUBE'
-		mtex.use_map_color_diffuse = True 
-		mtex.use_map_color_emission = True 
-		mtex.emission_color_factor = 0.5
-		mtex.use_map_density = True 
-		mtex.scale = (uvSizeCube, uvSizeCube, uvSizeCube)
-			
+	def __init__(self, origin, numVerts, rad, totalHeight, crenaux, poteaux, door, rembarde, roof, etendard, stairs):			
 		# Create Tower object
 		bpy.context.scene.cursor_location = (0,0,0)
 		bpy.ops.mesh.primitive_circle_add(vertices=numVerts, radius=rad)
@@ -44,7 +16,7 @@ class TowerGenerator:
 		object.name = "TowerGenerator"
 		me = object.data
 		me.name = "TowerGenerator"
-		me.materials.append(matCube)
+		me.materials.append(bpy.data.materials['Brick'])
 		
 		# Set Edge Edit Mode
 		bpy.context.tool_settings.mesh_select_mode = [False, True, False]
@@ -118,9 +90,6 @@ class TowerGenerator:
 		# Poteaux
 		if (poteaux):
 			offset = totalHeight
-			# Extra height if crenaux
-			if (crenaux):
-				offset += crenauxHeight
 			copyObject("asset.stick")
 			spinObject(int(numVerts * 0.5), innerRadius - crenauxWidth * 0.5, (0,0,0), offset)
 			objectPoteaux = bpy.context.active_object
@@ -177,30 +146,13 @@ class TowerGenerator:
 			
 		# Roof
 		if (roof):
-			# Texture
-			roofpath = os.path.join(os.path.dirname(bpy.data.filepath), 'RooftilesWood0003_4_S.jpg')
-			realpathroof = os.path.expanduser(roofpath)
-			imgroof = bpy.data.images.load(realpathroof)
-			rTex = bpy.data.textures.new('RoofTexture', type = 'IMAGE')
-			rTex.image = imgroof
-			# Material
-			matRoof = bpy.data.materials.new('MatRoof')
-			mtex = matRoof.texture_slots.add()
-			mtex.texture = rTex
-			mtex.texture_coords = 'ORCO'
-			mtex.mapping = 'TUBE'
-			mtex.use_map_color_diffuse = True 
-			mtex.use_map_color_emission = True 
-			mtex.emission_color_factor = 0.5
-			mtex.use_map_density = True 
-			mtex.scale = (5, 5, 5)
 			# Object
 			bpy.context.scene.cursor_location = (0,0,0)
 			bpy.ops.mesh.primitive_circle_add(vertices=numVerts, radius=rad)
 			objectRoof = bpy.context.active_object
 			towerObjects.append(objectRoof)
 			me = objectRoof.data
-			me.materials.append(matRoof)
+			me.materials.append(bpy.data.materials['Roof'])
 			bpy.context.tool_settings.mesh_select_mode = [False, True, False]
 			# Edit Mode
 			bpy.ops.object.mode_set(mode='EDIT')
