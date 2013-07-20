@@ -1,6 +1,7 @@
 import bpy
 import mathutils
 import math
+import os
 from utils import *
 from math import *
 
@@ -14,6 +15,34 @@ class WallGenerator:
         self.createWall()
     
     def createWall(self):
+        uvSizeCubeWood = 20.0
+        uvSizeRoof = 20.0
+        uvSizeTube = 20.0
+        uvSizeCube = 0.4
+        
+        brick = os.path.join(os.path.dirname(bpy.data.filepath), 'BrickOldSharp0264_23_S.jpg')
+        realpathbrick = os.path.expanduser(brick)
+        try:
+        	imgbrick = bpy.data.images.load(realpathbrick)
+        except:
+        	raise NameError("Cannot load image %s" % realpathbrick)
+        
+        # Create image texture from image
+        cTex = bpy.data.textures.new('BrickTexture', type = 'IMAGE')
+        cTex.image = imgbrick
+        matCube = bpy.data.materials.new('MaterialCube')
+        
+        # Add texture slot for color texture
+        mtex = matCube.texture_slots.add()
+        mtex.texture = cTex
+        mtex.texture_coords = 'GLOBAL'
+        mtex.mapping = 'CUBE'
+        mtex.use_map_color_diffuse = True 
+        mtex.use_map_color_emission = True 
+        mtex.emission_color_factor = 0.5
+        mtex.use_map_density = True 
+        mtex.scale = (uvSizeCube, uvSizeCube, uvSizeCube)
+		
         # Do the rotation for take the good position of the intersection
         location = getPositionRotationY(self.object1.location, self.object2.location, math.pi/2)
         verticesObject1 = intersectionCircleLineWithoutZ(location, self.object1.location, self.wallWidth)
@@ -38,6 +67,7 @@ class WallGenerator:
             object = createMesh("WallGenerator", (0,0,0), verticesObject1 + verticesObject2, listEdges, listFaces)
             bpy.context.scene.objects.active = object
             object.select = True
+            object.data.materials.append(matCube)
             
             # Create the vertex groups
             i = 0
@@ -260,3 +290,11 @@ class CrenelGenerator:
                     finish = True
             index += 1
         return listVertices
+
+# Main
+objects = [obj for obj in bpy.context.scene.objects if obj.select]
+WallGenerator(objects[0], objects[1])
+#CrenelGenerator(objects[0], 0)
+#CrenelGenerator(objects[0], 1)
+#CrenelGenerator(objects[0], 2)
+#CrenelGenerator(objects[0], 3)
