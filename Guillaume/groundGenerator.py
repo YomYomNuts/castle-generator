@@ -14,6 +14,7 @@ class GroundGenerator:
         object = createMesh("GroundGenerator", (0,0,0), listVertices, [], [])
         bpy.context.scene.objects.active = object
         object.select = True
+        object.data.materials.append(bpy.data.materials['Ground'])
         
         # Do the face
         bpy.ops.object.mode_set(mode='EDIT')
