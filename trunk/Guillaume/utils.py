@@ -355,3 +355,20 @@ def removeFromCollection(collection, name):
 	if (collection.__contains__(name)):
 		collection[name].user_clear()
 		collection.remove(collection[name])
+		
+def RandomBetween(startNumber, endNumber):
+	baseNumber = []
+	randNumber = []
+	for i in range(endNumber + 1):
+		baseNumber.append(i)
+		randNumber.append(i)
+	i = endNumber
+	while (i > startNumber):
+		tempRandom = startNumber + int(random.random()*(i - startNumber))
+		print(tempRandom)
+		print(randNumber[i])
+		randNumber[i] = baseNumber[tempRandom]
+		baseNumber[tempRandom] = baseNumber[i]                       
+		i -= 1
+	randNumber[startNumber] = baseNumber[startNumber]
+	return randNumber
