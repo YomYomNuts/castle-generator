@@ -219,7 +219,7 @@ class TowerGenerator:
 		# Etendard
 		if (etendard):
 			copyObject("asset.etendard")
-			spinOneObjectRandom(numVerts, rad, (0,0,totalHeight - 1), 0)
+			spinOneObjectRandom(numVerts, innerRadius, (0,0,totalHeight - 1), 0)
 			towerObjects.append(bpy.context.active_object)
 			
 		# Join everything
