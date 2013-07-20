@@ -7,7 +7,7 @@ class GroundGenerator:
         objects = [x for x in bpy.context.scene.objects]
         listVertices = []
         for object in objects:
-            if "TOWER" in object.name.upper():
+            if "TOWERGENERATOR" in object.name.upper():
                 listVertices.append(object.location)
         
         # Create the meshes
