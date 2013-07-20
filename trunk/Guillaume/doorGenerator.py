@@ -21,27 +21,39 @@ class DoorGenerator:
             pointC = objectInput.data.vertices[verticesIndex[0]].co.copy()
             # Find the point A
             for vertexIndex in verticesIndex:
-                if pointA.z > objectInput.data.vertices[vertexIndex].co.z:
+                if pointA.z > objectInput.data.vertices[vertexIndex].co.z and vertexIndex < 8:
                     pointA = objectInput.data.vertices[vertexIndex].co.copy()
                     indexPointA = objectInput.data.vertices[vertexIndex].index
-                if pointB.z < objectInput.data.vertices[vertexIndex].co.z:
+                if pointB.z < objectInput.data.vertices[vertexIndex].co.z and vertexIndex < 8:
                     pointB = objectInput.data.vertices[vertexIndex].co.copy()
             # Find the point B
             for vertexIndex in verticesIndex:
-                if pointB.z > objectInput.data.vertices[vertexIndex].co.z and not pointA.x == objectInput.data.vertices[vertexIndex].co.x and not pointA.y == objectInput.data.vertices[vertexIndex].co.y:
+                if pointB.z > objectInput.data.vertices[vertexIndex].co.z and not pointA.x == objectInput.data.vertices[vertexIndex].co.x or not pointA.y == objectInput.data.vertices[vertexIndex].co.y and vertexIndex < 8:
                     pointB = objectInput.data.vertices[vertexIndex].co.copy()
                     indexPointB = objectInput.data.vertices[vertexIndex].index
-                if pointA.z < objectInput.data.vertices[vertexIndex].co.z and pointA.x == objectInput.data.vertices[vertexIndex].co.x and pointA.y == objectInput.data.vertices[vertexIndex].co.y:
+                if pointA.z < objectInput.data.vertices[vertexIndex].co.z and pointA.x == objectInput.data.vertices[vertexIndex].co.x and pointA.y == objectInput.data.vertices[vertexIndex].co.y and vertexIndex < 8:
                     indexTopPointA = objectInput.data.vertices[vertexIndex].index
             # Find the point C
             for edge in objectInput.data.edges:
                 if indexPointA in edge.vertices and not indexTopPointA in edge.vertices and not indexPointB in edge.vertices:
-                    indexPointC = [x for x in edge.vertices if not x == indexPointA][0]
+                    indexPointC = [x for x in edge.vertices if not x == indexPointA and x < 8][0]
             pointC = objectInput.data.vertices[indexPointC].co.copy()
             
             pointA = objectInput.matrix_world * pointA
             pointB = objectInput.matrix_world * pointB
             pointC = objectInput.matrix_world * pointC
+            
+            # Save the vertex group
+            vertexGroups = [x for x in objectInput.vertex_groups]
+            verticesVertexGroups = []
+            for vertexGroup in vertexGroups:
+                bpy.ops.object.mode_set(mode='EDIT')
+                bpy.ops.mesh.select_all(action = 'DESELECT')
+                objectInput.vertex_groups.active_index = vertexGroup.index
+                bpy.ops.object.vertex_group_select()
+                bpy.ops.object.mode_set(mode='OBJECT')
+                verticesVertexGroups.append([vertexSearch.co.copy() for vertexSearch in objectInput.data.vertices if vertexSearch.select == True])
+            bpy.ops.object.vertex_group_remove(all=True)
             
             # Deselect the object
             objectInput.select = False
@@ -103,3 +115,16 @@ class DoorGenerator:
             
             # Do the difference with boolean modifier
             doDifferenceBooleanModifier(objectInput, object)
+            
+            # Restore the vertex group
+            i = 0
+            for verticesVertexGroup in verticesVertexGroups:
+                listIndex = []
+                for vertexCo in verticesVertexGroup:
+                    index = [x.index for x in objectInput.data.vertices if x.co == vertexCo]
+                    if len(index) > 0:
+                        listIndex.append(index[0])
+                bpy.ops.object.vertex_group_add()
+                objectInput.vertex_groups[i].name = str(i)
+                objectInput.vertex_groups[i].add(listIndex, 1, 'ADD')
+                i = i + 1
