@@ -5,12 +5,12 @@ from utils import *
 
 # Class DoorGenerator
 class DoorGenerator:
-    def __init__(self, objectInput, heightDoor=2, lengthDoor=2, percent=70):
+    def __init__(self, objectInput, heightDoor=2, widthDoor=2, percent=70):
         # Check if a face are select
         bpy.ops.object.mode_set(mode='OBJECT')
         faceSelect = [x for x in objectInput.data.polygons if x.select == True]
         if len(faceSelect) > 0:
-            # Get the important point
+            # Get the important points
             verticesIndex = [x for x in faceSelect[0].vertices]
             indexPointA = objectInput.data.vertices[verticesIndex[0]].index
             indexTopPointA = objectInput.data.vertices[verticesIndex[0]].index
@@ -47,7 +47,7 @@ class DoorGenerator:
             objectInput.select = False
             
             # Create the door
-            object = createMesh("DoorGenerator", (0,0,0), [mathutils.Vector((-lengthDoor/2,0,0)), mathutils.Vector((lengthDoor/2,0,0))], [(1,0)], [])
+            object = createMesh("DoorGenerator", (0,0,0), [mathutils.Vector((-widthDoor/2,0,0)), mathutils.Vector((widthDoor/2,0,0))], [(1,0)], [])
             bpy.context.scene.objects.active = object
             object.select = True
             
@@ -94,7 +94,3 @@ class DoorGenerator:
             
             # Do the difference with boolean modifier
             doDifferenceBooleanModifier(objectInput, object)
-
-# Main
-objects = [obj for obj in bpy.context.scene.objects if obj.select]
-DoorGenerator(objects[0])

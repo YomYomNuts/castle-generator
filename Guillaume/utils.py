@@ -1,6 +1,7 @@
 import bpy
 import mathutils
 import math
+import random
 
 # Create a mesh
 def createMesh(name, origin, verts, edges, faces):
@@ -305,3 +306,52 @@ def doDifferenceBooleanModifier(objectApply, object):
     bpy.context.scene.objects.active = objectApply
     objectApply.select = True
     bpy.ops.object.modifier_apply(apply_as='DATA', modifier=modifier.name)
+
+# Copy object on the scene
+def copyObject(name):
+	bpy.ops.object.select_all(action='DESELECT')
+	bpy.context.scene.objects.active = bpy.context.scene.objects[name]
+	bpy.context.scene.objects[name].layers[0] = True
+	bpy.context.scene.objects[name].select = True	
+	bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0,0,0)})
+	bpy.context.active_object.show_name = False
+	bpy.context.active_object.name = "tower." + name
+	bpy.context.scene.objects[name].select = False
+	bpy.context.scene.objects[name].layers[0] = False
+
+# Duplicate active object around a circle
+def spinObject(lod, radius, position, offset):
+    objects = []
+    for i in range(lod) :
+        obj = bpy.context.active_object
+        objects.append(obj)
+        obj.location = (position[0] + math.cos(math.pi * 2 * (i / lod)) * radius, position[1] + math.sin(math.pi * 2 * (i / lod )) * radius, position[2] + offset)
+        obj.rotation_euler[2] = math.pi * 2 * (i / lod)
+        if (i < lod - 1):
+            bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0,0,0)})
+    for o in objects:
+        o.select = True 
+    bpy.context.scene.cursor_location = (0,0,position[2] + offset)
+    bpy.ops.object.origin_set(type='ORIGIN_CURSOR', center='MEDIAN')
+    bpy.ops.object.join()
+
+# Duplicate active object around a circle
+def spinOneObject(lod, radius, position, offset):
+	obj = bpy.context.active_object
+	obj.location = (position[0] + math.cos(math.pi * 2 * (offset * 1/lod)) * radius, 
+		position[1] + math.sin(math.pi * 2 * (offset * 1/lod)) * radius, 
+		position[2])
+	obj.rotation_euler[2] = math.pi * 2 * (offset * 1/lod)
+
+def spinOneObjectRandom(lod, radius, position, offset):
+	i = int(random.random() * lod)
+	obj = bpy.context.active_object
+	obj.location = (position[0] + math.cos(math.pi * 2 * (i / lod + offset * 1/lod)) * radius, 
+		position[1] + math.sin(math.pi * 2 * (i / lod + offset * 1/lod)) * radius, 
+		position[2])
+	obj.rotation_euler[2] = math.pi * 2 * (i / lod + offset * 1/lod)
+	
+def removeFromCollection(collection, name):
+	if (collection.__contains__(name)):
+		collection[name].user_clear()
+		collection.remove(collection[name])

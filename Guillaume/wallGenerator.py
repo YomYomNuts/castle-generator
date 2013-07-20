@@ -260,11 +260,3 @@ class CrenelGenerator:
                     finish = True
             index += 1
         return listVertices
-
-# Main
-objects = [obj for obj in bpy.context.scene.objects if obj.select]
-WallGenerator(objects[0], objects[1])
-#CrenelGenerator(objects[0], 0)
-#CrenelGenerator(objects[0], 1)
-#CrenelGenerator(objects[0], 2)
-#CrenelGenerator(objects[0], 3)
