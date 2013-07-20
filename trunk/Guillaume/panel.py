@@ -48,6 +48,7 @@ class propertiesCastleGenerator(bpy.types.PropertyGroup):
     rembardeTower = bpy.props.BoolProperty(name="Rembarde", default=False)
     roofTower = bpy.props.BoolProperty(name="Roof", default=False)
     etendardTower = bpy.props.BoolProperty(name="Etendard", default=False)
+    stairsTower = bpy.props.BoolProperty(name="Stairs", default=False)
 	
 	# Terrain
     numBuissonTerrain = bpy.props.IntProperty(name="Buisson Number", description="", default=24, min=3, max=64)
@@ -143,6 +144,7 @@ class panelCastleGeneratorTower(bpy.types.Panel):
         box.prop(castlegenerator, 'rembardeTower')
         box.prop(castlegenerator, 'roofTower')
         box.prop(castlegenerator, 'etendardTower')
+        box.prop(castlegenerator, 'stairsTower')
         box.operator("castlegenerator.generatetowers", text="Generate tower", icon="MESH_CYLINDER")
 
 class panelCastleGeneratorCapture(bpy.types.Panel):
@@ -159,14 +161,14 @@ class panelCastleGeneratorCapture(bpy.types.Panel):
         box = row.box()
         box.operator("castlegenerator.positioncapture", text="Position capture", icon="SCENE")
 
-
+# GROUND
 class OBJECT_OT_GenerateGround(bpy.types.Operator):
     bl_idname = "castlegenerator.generateground"
     bl_label = "Generate ground"
     def execute(self, context):
         GroundGenerator()
         return{'FINISHED'}
-
+# TERRAIN
 class OBJECT_OT_GenerateTerrain(bpy.types.Operator):
     bl_idname = "castlegenerator.generateterrain"
     bl_label = "Generate terrain"
@@ -174,7 +176,7 @@ class OBJECT_OT_GenerateTerrain(bpy.types.Operator):
         castlegenerator = bpy.context.window_manager.castlegenerator
         TerrainGenerator(castlegenerator.numBuissonTerrain)
         return{'FINISHED'}
-
+# WALLS
 class OBJECT_OT_GenerateWalls(bpy.types.Operator):
     bl_idname = "castlegenerator.generatewalls"
     bl_label = "Generate walls"
@@ -185,7 +187,7 @@ class OBJECT_OT_GenerateWalls(bpy.types.Operator):
         if len(objects) == 2 and objects[0] != None and objects[1] != None:
             WallGenerator(objects[0], objects[1], castlegenerator.wallWidth, castlegenerator.wallHeight)
         return{'FINISHED'}
-
+# CRENELS
 class OBJECT_OT_GenerateCrenels(bpy.types.Operator):
     bl_idname = "castlegenerator.generatecrenels"
     bl_label = "Generate crenels"
@@ -196,7 +198,7 @@ class OBJECT_OT_GenerateCrenels(bpy.types.Operator):
         if len(objects) == 1 and objects[0] != None:
             CrenelGenerator(objects[0], castlegenerator.indexVertexGroup, castlegenerator.lowWallHeight, castlegenerator.lowWallWidth, castlegenerator.beginByCrenel, castlegenerator.inverseSensCreation, castlegenerator.crenelLength, castlegenerator.merlonLength, castlegenerator.merlonHeight)
         return{'FINISHED'}
-
+# DOOR
 class OBJECT_OT_GenerateDoor(bpy.types.Operator):
     bl_idname = "castlegenerator.generatedoor"
     bl_label = "Generate door"
@@ -207,7 +209,7 @@ class OBJECT_OT_GenerateDoor(bpy.types.Operator):
         if len(objects) == 1 and objects[0] != None:
             DoorGenerator(objects[0], castlegenerator.doorHeight, castlegenerator.doorWidth, castlegenerator.doorPositionPercent)
         return{'FINISHED'}
-
+# TOWER
 class OBJECT_OT_GenerateTowers(bpy.types.Operator):
     bl_idname = "castlegenerator.generatetowers"
     bl_label = "Generate towers"
@@ -223,9 +225,10 @@ class OBJECT_OT_GenerateTowers(bpy.types.Operator):
 		castlegenerator.doorTower,
 		castlegenerator.rembardeTower,
 		castlegenerator.roofTower,
-		castlegenerator.etendardTower)
+		castlegenerator.etendardTower,
+		castlegenerator.stairsTower)
         return{'FINISHED'}
-
+# CAPTURE
 class OBJECT_OT_PositionCapture(bpy.types.Operator):
     bl_idname = "castlegenerator.positioncapture"
     bl_label = "Position capture"

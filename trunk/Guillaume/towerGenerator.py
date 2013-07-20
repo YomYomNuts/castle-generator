@@ -6,7 +6,7 @@ from utils import *
 
 # Class TowerGenerator
 class TowerGenerator:
-	def __init__(self, origin, numVerts, rad, totalHeight, crenaux, poteaux, door, rembarde, roof, etendard):
+	def __init__(self, origin, numVerts, rad, totalHeight, crenaux, poteaux, door, rembarde, roof, etendard, stairs):
 		uvSizeCubeWood = 20.0
 		uvSizeRoof = 20.0
 		uvSizeTube = 20.0
@@ -70,6 +70,10 @@ class TowerGenerator:
 		ratio = 1 - (1 / (rad-1))
 		bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":(0, 0, 0)})	
 		bpy.ops.transform.resize(value=(ratio, ratio, 1))
+		if (stairs == False):
+			for i in range(int(rad-1)):
+				bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":(0, 0, 0)})	
+				bpy.ops.transform.resize(value=(ratio, ratio, 1))
 		
 		# Hole
 		bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":(0, 0, -totalHeight)})	
@@ -131,38 +135,39 @@ class TowerGenerator:
 				objectRembarde.rotation_euler[2] = math.pi * (1 / numVerts)
 		
 		# Stairs
-		innerRadius = innerRadius * ratio
-		radian = math.pi * 2 * (1/numVerts)
-		stairWidthOut = radian * rad
-		stairWidthIn = radian 
-		stairHeight = 0.25
-		lenStairs = int(totalHeight/stairHeight) - 1
-		width = 0
-		verts = [(-innerRadius, stairWidthOut * -0.5, 0), (-innerRadius, (stairWidthOut * 0.5), 0), (0, 0, 0), (0, 0, 0)] 
-		edges = []
-		faces = [[0,1,2,3]]
-		stair = createMesh("Stairs", (0,0,0), verts, edges, faces)
-		stair.show_name = False
-		bpy.ops.object.select_all(action='DESELECT')
-		bpy.context.scene.objects.active = stair
-		bpy.ops.object.mode_set(mode='EDIT')
-		bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":(0, 0, stairHeight)})
-		bpy.ops.object.mode_set(mode='OBJECT')
-		stair.select = True
-		bpy.context.scene.objects.active = stair
-		bpy.context.active_object.rotation_euler[2] = math.pi * 2 * (-0.5/numVerts)
-		objectStair = [stair]
-		for s in range(lenStairs) :
-			bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0, 0, stairHeight)})
-			bpy.context.active_object.rotation_euler[2] = math.pi * 2 * (s / numVerts + 0.5/numVerts)
-			objectStair.append(bpy.context.active_object)
+		if (stairs):
+			innerRadius = innerRadius * ratio
+			radian = math.pi * 2 * (1/numVerts)
+			stairWidthOut = radian * rad
+			stairWidthIn = radian 
+			stairHeight = 0.25
+			lenStairs = int(totalHeight/stairHeight) - 1
+			width = 0
+			verts = [(-innerRadius, stairWidthOut * -0.5, 0), (-innerRadius, (stairWidthOut * 0.5), 0), (0, 0, 0), (0, 0, 0)] 
+			edges = []
+			faces = [[0,1,2,3]]
+			stair = createMesh("Stairs", (0,0,0), verts, edges, faces)
+			stair.show_name = False
+			bpy.ops.object.select_all(action='DESELECT')
+			bpy.context.scene.objects.active = stair
+			bpy.ops.object.mode_set(mode='EDIT')
+			bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":(0, 0, stairHeight)})
+			bpy.ops.object.mode_set(mode='OBJECT')
+			stair.select = True
+			bpy.context.scene.objects.active = stair
+			bpy.context.active_object.rotation_euler[2] = math.pi * 2 * (-0.5/numVerts)
+			objectStair = [stair]
+			for s in range(lenStairs) :
+				bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0, 0, stairHeight)})
+				bpy.context.active_object.rotation_euler[2] = math.pi * 2 * (s / numVerts + 0.5/numVerts)
+				objectStair.append(bpy.context.active_object)
+				
+			for o in objectStair:
+				o.select = True
 			
-		for o in objectStair:
-			o.select = True
-		
-		bpy.context.scene.objects.active = stair
-		bpy.ops.object.join()
-		towerObjects.append(bpy.context.active_object)
+			bpy.context.scene.objects.active = stair
+			bpy.ops.object.join()
+			towerObjects.append(bpy.context.active_object)
 			
 		# Door
 		if (door):
