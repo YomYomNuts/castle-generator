@@ -70,16 +70,25 @@ class DoorGenerator:
             # Finish the door
             # Extend the vertices and edges
             bpy.ops.object.mode_set(mode='OBJECT')
-            object.data.vertices.add(2)
-            object.data.edges.add(3)
+            object.data.vertices.add(5)
+            object.data.edges.add(6)
             # Add the vertices and edges
-            object.data.vertices[-2].co = object.data.vertices[0].co.copy()
-            object.data.vertices[-2].co.z = object.data.vertices[-2].co.z + heightDoor
-            object.data.vertices[-1].co = object.data.vertices[1].co.copy()
-            object.data.vertices[-1].co.z = object.data.vertices[-1].co.z + heightDoor
-            object.data.edges[-1].vertices = [3, 1]
-            object.data.edges[-2].vertices = [2, 3]
-            object.data.edges[-3].vertices = [0, 2]
+            object.data.vertices[-5].co = object.data.vertices[0].co.copy()
+            object.data.vertices[-5].co.z = object.data.vertices[-2].co.z + heightDoor
+            object.data.vertices[-4].co = object.data.vertices[1].co.copy()
+            object.data.vertices[-4].co.z = object.data.vertices[-1].co.z + heightDoor
+            object.data.vertices[-3].co = (object.data.vertices[-5].co + object.data.vertices[-4].co) / 2
+            object.data.vertices[-3].co.z = object.data.vertices[-3].co.z + heightDoor * 3/5
+            object.data.vertices[-2].co = (object.data.vertices[-5].co + object.data.vertices[-3].co) / 2
+            object.data.vertices[-2].co.z = object.data.vertices[-2].co.z + heightDoor * 1/5
+            object.data.vertices[-1].co = (object.data.vertices[-3].co + object.data.vertices[-4].co) / 2
+            object.data.vertices[-1].co.z = object.data.vertices[-1].co.z + heightDoor * 1/5
+            object.data.edges[-1].vertices = [0, 2]
+            object.data.edges[-2].vertices = [2, 5]
+            object.data.edges[-3].vertices = [5, 4]
+            object.data.edges[-4].vertices = [4, 6]
+            object.data.edges[-5].vertices = [6, 3]
+            object.data.edges[-6].vertices = [3, 1]
             
             # Do the extrude
             bpy.ops.object.mode_set(mode='EDIT')
