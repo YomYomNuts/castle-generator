@@ -5,6 +5,7 @@ from wallGenerator import *
 from groundGenerator import *
 from doorGenerator import *
 from towerGenerator import *
+from terrainGenerator import *
 
 bl_info = {
     "name": "Castle Generator",
@@ -45,6 +46,11 @@ class propertiesCastleGenerator(bpy.types.PropertyGroup):
     poteauxTower = bpy.props.BoolProperty(name="Poteaux", default=False)
     doorTower = bpy.props.BoolProperty(name="Porte", default=False)
     rembardeTower = bpy.props.BoolProperty(name="Rembarde", default=False)
+    roofTower = bpy.props.BoolProperty(name="Roof", default=False)
+    etendardTower = bpy.props.BoolProperty(name="Etendard", default=False)
+	
+	# Terrain
+    numBuissonTerrain = bpy.props.IntProperty(name="Buisson Number", description="", default=24, min=3, max=64)
 
 
 class panelCastleGeneratorGround(bpy.types.Panel):
@@ -59,6 +65,20 @@ class panelCastleGeneratorGround(bpy.types.Panel):
         row = layout.row()
         box = row.box()
         box.operator("castlegenerator.generateground", text="Generate ground", icon="BRUSH_ADD")
+
+class panelCastleGeneratorTerrain(bpy.types.Panel):
+    bl_label = "Castle Generator - Terrain"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    def draw(self, context):
+        layout = self.layout
+        castlegenerator = bpy.context.window_manager.castlegenerator
+        # Ground
+        layout.label("Terrain", icon='ACTION')
+        row = layout.row()
+        box = row.box()
+        box.prop(castlegenerator, 'numBuissonTerrain')
+        box.operator("castlegenerator.generateterrain", text="Generate terrain", icon="BRUSH_ADD")
 
 class panelCastleGeneratorWall(bpy.types.Panel):
     bl_label = "Castle Generator - Wall"
@@ -121,6 +141,8 @@ class panelCastleGeneratorTower(bpy.types.Panel):
         box.prop(castlegenerator, 'poteauxTower')
         box.prop(castlegenerator, 'doorTower')
         box.prop(castlegenerator, 'rembardeTower')
+        box.prop(castlegenerator, 'roofTower')
+        box.prop(castlegenerator, 'etendardTower')
         box.operator("castlegenerator.generatetowers", text="Generate tower", icon="MESH_CYLINDER")
 
 class panelCastleGeneratorCapture(bpy.types.Panel):
@@ -143,6 +165,14 @@ class OBJECT_OT_GenerateGround(bpy.types.Operator):
     bl_label = "Generate ground"
     def execute(self, context):
         GroundGenerator()
+        return{'FINISHED'}
+
+class OBJECT_OT_GenerateTerrain(bpy.types.Operator):
+    bl_idname = "castlegenerator.generateterrain"
+    bl_label = "Generate terrain"
+    def execute(self, context):
+        castlegenerator = bpy.context.window_manager.castlegenerator
+        TerrainGenerator(castlegenerator.numBuissonTerrain)
         return{'FINISHED'}
 
 class OBJECT_OT_GenerateWalls(bpy.types.Operator):
@@ -184,7 +214,16 @@ class OBJECT_OT_GenerateTowers(bpy.types.Operator):
     def execute(self, context):
         castlegenerator = bpy.context.window_manager.castlegenerator
         
-        TowerGenerator(bpy.context.scene.cursor_location.copy(), castlegenerator.numVertsTower, castlegenerator.radiusTower, castlegenerator.totalHeightTower, castlegenerator.crenauxTower, castlegenerator.poteauxTower, castlegenerator.doorTower, castlegenerator.rembardeTower)
+        TowerGenerator(bpy.context.scene.cursor_location.copy(),
+		castlegenerator.numVertsTower,
+		castlegenerator.radiusTower,
+		castlegenerator.totalHeightTower,
+		castlegenerator.crenauxTower,
+		castlegenerator.poteauxTower,
+		castlegenerator.doorTower,
+		castlegenerator.rembardeTower,
+		castlegenerator.roofTower,
+		castlegenerator.etendardTower)
         return{'FINISHED'}
 
 class OBJECT_OT_PositionCapture(bpy.types.Operator):
@@ -207,7 +246,7 @@ class OBJECT_OT_PositionCapture(bpy.types.Operator):
         return{'FINISHED'}
 
 
-classes = [propertiesCastleGenerator, panelCastleGeneratorGround, panelCastleGeneratorWall, panelCastleGeneratorTower, panelCastleGeneratorCapture, OBJECT_OT_GenerateGround, OBJECT_OT_GenerateWalls, OBJECT_OT_GenerateCrenels, OBJECT_OT_GenerateDoor, OBJECT_OT_GenerateTowers, OBJECT_OT_PositionCapture]
+classes = [propertiesCastleGenerator, panelCastleGeneratorGround, panelCastleGeneratorTerrain, panelCastleGeneratorWall, panelCastleGeneratorTower, panelCastleGeneratorCapture, OBJECT_OT_GenerateGround, OBJECT_OT_GenerateTerrain, OBJECT_OT_GenerateWalls, OBJECT_OT_GenerateCrenels, OBJECT_OT_GenerateDoor, OBJECT_OT_GenerateTowers, OBJECT_OT_PositionCapture]
 
 def register():
     for c in classes:
