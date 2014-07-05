@@ -1,218 +1,265 @@
 import bpy
-import random
 import mathutils
-from math import*
+import math
+import os
 from utils import *
+from math import *
 
 # Class WallGenerator
 class WallGenerator:
-    def __init__(self, positionCenter=mathutils.Vector((0, 0, 0)), distance=20, minimalWallLenght=20, maximalWallLenght=26, widthWall=4, minimalHeightWall=10, maximalHeightWall=15):
-        self.positionCenter = positionCenter
-        self.distance = distance
-        self.minimalWallLenght = minimalWallLenght
-        self.maximalWallLenght = maximalWallLenght
-        self.widthWall = widthWall
-        self.minimalHeightWall = minimalHeightWall
-        self.maximalHeightWall = maximalHeightWall
-        self.listEdges = []
-        self.listFaces = []
-        self.positionsExternalWall = []
-        self.positionsInternalWall = []
-        tempVector = mathutils.Vector((self.positionCenter.x + self.distance, self.positionCenter.y, 0))
-        self.createInternalWall(tempVector, random.uniform(0, self.distance * 2))
-        self.createExternalWall()
-        object = createMesh("WallGenerator", (0,0,0), self.positionsInternalWall + self.positionsExternalWall, self.listEdges, self.listFaces)
-        self.createWallHeight(object)
+    def __init__(self, object1, object2, wallWidth=3, wallHeight=5):
+        self.object1 = object1
+        self.object2 = object2
+        self.wallWidth = wallWidth
+        self.wallHeight = wallHeight
+        self.createWall()
     
-    # Defines the position of the point internal of the wall
-    def createInternalWall(self, initialPosition, lengthWall):
-        x1 = 0
-        y1 = 0
-        x2 = 0
-        y2 = 0
-        if self.positionCenter.y != initialPosition.y:
-            # Equation Ax**2 + Bx + C = 0
-            N = (lengthWall ** 2 - self.distance ** 2 - initialPosition.x ** 2 + self.positionCenter.x ** 2 - initialPosition.y ** 2 + self.positionCenter.y ** 2) / (2 * (self.positionCenter.y - initialPosition.y))
-            H = ((self.positionCenter.x - initialPosition.x) / (self.positionCenter.y - initialPosition.y))
-            A = H ** 2 + 1
-            B = 2 * self.positionCenter.y * H - 2 * N * H - 2 * self.positionCenter.x
-            C = self.positionCenter.x ** 2 + self.positionCenter.y ** 2 + N ** 2 - self.distance ** 2 - 2 * self.positionCenter.y * N
-            
-            # Determine the delta
-            delta = sqrt(B ** 2 - 4 * A * C)
-            
-            # Get the 2 solutions
-            x1 = (- B + delta) / (2 * A)
-            y1 = N - x1 * H
-            x2 = (- B - delta) / (2 * A)
-            y2 = N - x2 * H
-        else:
-            #Equation Ay**2 + By + C = 0
-            x1 = (lengthWall ** 2 - self.distance ** 2 - initialPosition.x ** 2 + self.positionCenter.x ** 2) / (2 * (self.positionCenter.x - initialPosition.x))
-            x2 = x1
-            A = 1
-            B = - 2 * initialPosition.y
-            C = initialPosition.x ** 2 + x1 ** 2 - 2 * initialPosition.x * x1 + initialPosition.y ** 2 - lengthWall ** 2
-            
-            # Determine the delta
-            delta = sqrt(B ** 2 - 4 * A * C)
-            
-            # Get the 2 solutions
-            y1 = (- B + delta) / (2 * A)
-            y2 = (- B - delta) / (2 * A)
+    def createWall(self):
+		
+        # Do the rotation for take the good position of the intersection
+        location = getPositionRotationY(self.object1.location, self.object2.location, math.pi/2)
+        verticesObject1 = intersectionCircleLineWithoutZ(location, self.object1.location, self.wallWidth)
         
-        #Get the position
-        positionWall = mathutils.Vector((x1, y1, 0))
+        # Do the rotation for take the good position of the intersection
+        location = getPositionRotationY(self.object2.location, self.object1.location, math.pi/2)
+        verticesObject2 = intersectionCircleLineWithoutZ(location, self.object2.location, self.wallWidth)
         
-        # Verify if the position is visible by the others points
-        if self.visible(positionWall, initialPosition, self.positionCenter) < 0:
-            # Change position
-            positionWall = mathutils.Vector((x2, y2, 0))
-        
-        # Add the point
-        if len(self.positionsInternalWall) < 3 or not (self.visible(positionWall, self.positionsInternalWall[0], self.positionCenter) > 0 and self.visible(initialPosition, self.positionsInternalWall[0], self.positionCenter) < 0):
+        # Make the wall
+        if verticesObject1[0] != None and verticesObject2 != None:
+            # Do the extrude
+            verticesObject1 += (mathutils.Vector((verticesObject1[0].x, verticesObject1[0].y, verticesObject1[0].z + self.wallHeight)), mathutils.Vector((verticesObject1[1].x, verticesObject1[1].y, verticesObject1[1].z + self.wallHeight)))
+            verticesObject2 += (mathutils.Vector((verticesObject2[0].x, verticesObject2[0].y, verticesObject2[0].z + self.wallHeight)), mathutils.Vector((verticesObject2[1].x, verticesObject2[1].y, verticesObject2[1].z + self.wallHeight)))
+            
             # Do the edges
-            if len(self.positionsInternalWall) > 0:
-                self.listEdges.append((len(self.positionsInternalWall) - 1, len(self.positionsInternalWall)))
+            listEdges = ((0, 1), (0, 2), (1, 3), (2, 3), (4, 5), (4, 6), (5, 7), (6, 7), (0, 4), (1, 5), (2, 6), (3, 7))
             
-            self.positionsInternalWall.append(positionWall)
-            self.createInternalWall(positionWall, random.uniform(self.minimalWallLenght, self.maximalWallLenght))
-        else:
-            self.listEdges.append((len(self.positionsInternalWall) - 1, 0))
+            # Do the faces
+            listFaces = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 2, 6, 4), (1, 5, 7, 3), (0, 4, 5, 1), (2, 3, 7, 6)]
+            
+            # Create the meshes
+            object = createMesh("WallGenerator", (0,0,0), verticesObject1 + verticesObject2, listEdges, listFaces)
+            bpy.context.scene.objects.active = object
+            object.select = True
+            object.data.materials.append(bpy.data.materials['Brick'])
+            
+            # Create the vertex groups
+            i = 0
+            while i < 4:
+                bpy.ops.object.vertex_group_add()
+                object.vertex_groups[i].name = str(i)
+                i += 1
+            
+            # Add the edges to vertex groups
+            object.vertex_groups[0].add([2, 6], 1, 'ADD')
+            object.vertex_groups[1].add([3, 7], 1, 'ADD')
+            object.vertex_groups[2].add([2, 3], 1, 'ADD')
+            object.vertex_groups[3].add([6, 7], 1, 'ADD')
+
+
+# Class CrenelGenerator
+class CrenelGenerator:
+    def __init__(self, object, indexVertexGroup=3, lowWallHeight=1, lowWallWidth=0.5, beginByCrenel=True, inverseSensCreation=False, crenelLength=0.4, merlonLength=0.6, merlonHeight=0.5):
+        self.object = object
+        self.indexVertexGroup = indexVertexGroup
+        self.lowWallHeight = lowWallHeight
+        self.lowWallWidth = lowWallWidth
+        self.beginByCrenel = beginByCrenel
+        self.inverseSensCreation = inverseSensCreation
+        self.crenelLength = crenelLength
+        self.merlonLength = merlonLength
+        self.merlonHeight = merlonHeight
+        listIndexVerticesCreated = self.createLowWall()
+        self.createCrenelMerlon(listIndexVerticesCreated)
     
-    # Defines the visibility of a point
-    def visible(self, vertex, previousVertex, previousPreviousVertex):
-        segmentActuel = mathutils.Vector((previousPreviousVertex.x - previousVertex.x, previousPreviousVertex.y - previousVertex.y, 0))
-        segmentPrecedent = mathutils.Vector((vertex.x - previousVertex.x, vertex.y - previousVertex.y, 0))
-        
-        # Orientation of the polygon, it's everytime positive
-        signOrientation = 1
-        return signOrientation * (segmentActuel.x * segmentPrecedent.y - segmentActuel.y * segmentPrecedent.x)
-    
-    # Defines the position of the point internal of the wall
-    def createExternalWall(self):
-        index = 0
-        for pos in self.positionsInternalWall:
-            if not (pos.x == self.positionCenter.x and pos.y == self.positionCenter.y):
-                H = (pos.x - self.positionCenter.x) ** 2
-                x1 = sqrt(((self.distance + self.widthWall) ** 2 * H) / (H + (pos.y - self.positionCenter.y) ** 2))
-                y1 = x1 * (pos.y - self.positionCenter.y) / (pos.x - self.positionCenter.x)
-                x2 = - x1
-                y2 = x2 * (pos.y - self.positionCenter.y) / (pos.x - self.positionCenter.x)
-                
-                # Do the edges
-                # Edges between external vertex
-                if len(self.positionsExternalWall) > 0:
-                    self.listEdges.append((len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1, len(self.positionsInternalWall) + len(self.positionsExternalWall)))
-                # Edges between internal and external vertex
-                self.listEdges.append((index, len(self.positionsInternalWall) + len(self.positionsExternalWall)))
-                
-                # Do the faces
-                if len(self.positionsExternalWall) > 0:
-                    self.listFaces.append((index - 1, index, len(self.positionsInternalWall) + len(self.positionsExternalWall), len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1))
-                
-                # Add the new vertex
-                if self.positionCenter.x > pos.x:
-                    if self.positionCenter.y > pos.y:
-                        if self.positionCenter.x > x1 and self.positionCenter.y > y1:
-                            self.positionsExternalWall.append(mathutils.Vector((x1, y1, 0)))
-                        else:
-                            self.positionsExternalWall.append(mathutils.Vector((x2, y2, 0)))
-                    elif self.positionCenter.y < pos.y:
-                        if self.positionCenter.x > x1 and self.positionCenter.y < y1:
-                            self.positionsExternalWall.append(mathutils.Vector((x1, y1, 0)))
-                        else:
-                            self.positionsExternalWall.append(mathutils.Vector((x2, y2, 0)))
-                    else:
-                        if self.positionCenter.x > x1:
-                            self.positionsExternalWall.append(mathutils.Vector((x1, y1, 0)))
-                        else:
-                            self.positionsExternalWall.append(mathutils.Vector((x2, y2, 0)))
-                elif self.positionCenter.x < pos.x:
-                    if self.positionCenter.y > pos.y:
-                        if self.positionCenter.x < x1 and self.positionCenter.y > y1:
-                            self.positionsExternalWall.append(mathutils.Vector((x1, y1, 0)))
-                        else:
-                            self.positionsExternalWall.append(mathutils.Vector((x2, y2, 0)))
-                    elif self.positionCenter.y < pos.y:
-                        if self.positionCenter.x < x1 and self.positionCenter.y < y1:
-                            self.positionsExternalWall.append(mathutils.Vector((x1, y1, 0)))
-                        else:
-                            self.positionsExternalWall.append(mathutils.Vector((x2, y2, 0)))
-                    else:
-                        if self.positionCenter.x < x1:
-                            self.positionsExternalWall.append(mathutils.Vector((x1, y1, 0)))
-                        else:
-                            self.positionsExternalWall.append(mathutils.Vector((x2, y2, 0)))
-                else:
-                    if self.positionCenter.y > pos.y:
-                        if self.positionCenter.y > y1:
-                            self.positionsExternalWall.append(mathutils.Vector((x1, y1, 0)))
-                        else:
-                            self.positionsExternalWall.append(mathutils.Vector((x2, y2, 0)))
-                    else:
-                        if self.positionCenter.y < y1:
-                            self.positionsExternalWall.append(mathutils.Vector((x1, y1, 0)))
-                        else:
-                            self.positionsExternalWall.append(mathutils.Vector((x2, y2, 0)))
-            index += 1
-        
-        # Add the last edges
-        self.listEdges.append((len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1, index - 1))
-        # Add the last faces
-        self.listFaces.append((index - 1, 0, index, len(self.positionsInternalWall) + len(self.positionsExternalWall) - 1))
-    
-    # Create the wall height
-    def createWallHeight(self, object):
-        # Active the object
-        object.select = True
-        bpy.context.scene.objects.active = object
-        
-        # Deselect all vertex
+    def createLowWall(self):
+        # Select the vertices
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
+        self.object.vertex_groups.active_index = self.indexVertexGroup
+        bpy.ops.object.vertex_group_select()
         bpy.ops.object.mode_set(mode='OBJECT')
+        verticesIndex = [vertexSearch.index for vertexSearch in self.object.data.vertices if vertexSearch.select == True]
         
-        index = 0
-        for face in self.listFaces:
-            # Select the vertex of a face
-            for vertex in object.data.polygons[index].vertices:
-                bpy.context.active_object.data.vertices[vertex].select = True
+        # Do the low wall
+        i = 0
+        while i < len(verticesIndex):
+            indexVertex = verticesIndex[i]
             
-            # Do the extrude and after deselect the vertex
+            # Take the vertex reference
+            vertexReference = mathutils.Vector((0, 0, 0))
+            if (indexVertex == 2 and self.indexVertexGroup == 0) or (indexVertex == 7 and self.indexVertexGroup == 3):
+                vertexReference = self.object.data.vertices[3].co
+            elif (indexVertex == 2 and self.indexVertexGroup == 2) or (indexVertex == 7 and self.indexVertexGroup == 1):
+                vertexReference = self.object.data.vertices[6].co
+            elif (indexVertex == 3 and self.indexVertexGroup == 1) or (indexVertex == 6 and self.indexVertexGroup == 3):
+                vertexReference = self.object.data.vertices[2].co
+            elif (indexVertex == 3 and self.indexVertexGroup == 2) or (indexVertex == 6 and self.indexVertexGroup == 0):
+                vertexReference = self.object.data.vertices[7].co
+            
+            # Get the vertice of intersection
+            verticesObject = intersectionCircleLineWithZ(vertexReference, self.object.data.vertices[indexVertex].co, self.lowWallWidth)
+            
+            if verticesObject[0] != None and verticesObject[1] != None:
+                # Get the good vertice
+                selectedVertex = getVertexInBox(False, self.object.data.vertices[indexVertex].co, vertexReference, verticesObject[0], verticesObject[1])
+                
+                if selectedVertex != None:
+                    # Extend the vertices and the edges
+                    self.object.data.vertices.add(1)
+                    self.object.data.edges.add(1)
+                    
+                    # Add the vertices and edges
+                    self.object.data.vertices[-1].co = (selectedVertex.x, selectedVertex.y, selectedVertex.z)
+                    self.object.data.edges[-1].vertices = [indexVertex, self.object.data.vertices[-1].index]
+            i += 1
+        
+        # Add an edge
+        self.object.data.edges.add(1)
+        self.object.data.edges[-1].vertices = [self.object.data.vertices[-1].index, self.object.data.vertices[-2].index]
+        
+        # Define utils variables
+        listVertice = [verticesIndex[1], self.object.data.vertices[-1].index, self.object.data.vertices[-2].index, verticesIndex[0]]
+        
+        # Do the extrude
+        listIndexVerticesCreated = []
+        if self.lowWallHeight > 0:
+            listIndexVerticesCreated = manualExtrude(self.object, listVertice, mathutils.Vector((0, 0, self.lowWallHeight)))
+            
+        listIndexVertices = []
+        if len(listIndexVerticesCreated) > 3:
+            listIndexVertices = [listIndexVerticesCreated[3], listIndexVerticesCreated[0], listIndexVerticesCreated[2], listIndexVerticesCreated[1]]
+        
+        return listIndexVertices
+    
+    def createCrenelMerlon(self, listIndexVerticesLowWall):
+        # Select the vertices
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        self.object.vertex_groups.active_index = self.indexVertexGroup
+        bpy.ops.object.vertex_group_select()
+        bpy.ops.object.mode_set(mode='OBJECT')
+        verticesSelected = [vertexSearch for vertexSearch in self.object.data.vertices if vertexSearch.select == True]
+        
+        # Define the first and the second length
+        if self.beginByCrenel:
+            length1 = self.crenelLength
+            length2 = self.merlonLength
+        else:
+            length1 = self.merlonLength
+            length2 = self.crenelLength
+        
+        # Get the first vertices of merlon and crenel
+        lastVertice = []
+        if self.inverseSensCreation:
+            previousFirst = listIndexVerticesLowWall[1]
+            lastVertice.append(listIndexVerticesLowWall[0])
+            verticesFirst = self.calculateVerticesCrenelMerlon(self.object.data.vertices[listIndexVerticesLowWall[1]].co, self.object.data.vertices[listIndexVerticesLowWall[0]].co, length1 , length2)
+        else:
+            previousFirst = listIndexVerticesLowWall[0]
+            lastVertice.append(listIndexVerticesLowWall[1])
+            verticesFirst = self.calculateVerticesCrenelMerlon(self.object.data.vertices[listIndexVerticesLowWall[0]].co, self.object.data.vertices[listIndexVerticesLowWall[1]].co, length1 , length2)
+        
+        # Define the size of the merlon and crenel for this other side
+        coefficient = length2 / length1
+        totalSize = sqrt((self.object.data.vertices[listIndexVerticesLowWall[3]].co[0] - self.object.data.vertices[listIndexVerticesLowWall[2]].co[0]) ** 2 + (self.object.data.vertices[listIndexVerticesLowWall[3]].co[1] - self.object.data.vertices[listIndexVerticesLowWall[2]].co[1]) ** 2)
+        if len(verticesFirst) % 2 == 0:
+            newLength1 = totalSize / ((len(verticesFirst) + len(verticesFirst) * coefficient) / 2)
+        else:
+            newLength1 = totalSize / ((len(verticesFirst) + 1 + (len(verticesFirst) + 1) * coefficient) / 2)
+        newLength2 = newLength1 * coefficient
+        
+        # Get the seconds vertices of merlon and crenel
+        if self.inverseSensCreation:
+            previousSecond = listIndexVerticesLowWall[3]
+            lastVertice.append(listIndexVerticesLowWall[2])
+            verticesSecond = self.calculateVerticesCrenelMerlon(self.object.data.vertices[listIndexVerticesLowWall[3]].co, self.object.data.vertices[listIndexVerticesLowWall[2]].co, newLength1 , newLength2)
+        else:
+            previousSecond = listIndexVerticesLowWall[2]
+            lastVertice.append(listIndexVerticesLowWall[3])
+            verticesSecond = self.calculateVerticesCrenelMerlon(self.object.data.vertices[listIndexVerticesLowWall[2]].co, self.object.data.vertices[listIndexVerticesLowWall[3]].co, newLength1 , newLength2)
+        
+        # Creation of merlon and crenel
+        index = 0   
+        while index <= len(verticesFirst):
+            # Deselect all the vertices
             bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":mathutils.Vector((0, 0, random.uniform(self.minimalHeightWall, self.maximalHeightWall)))})
             bpy.ops.mesh.select_all(action = 'DESELECT')
             bpy.ops.object.mode_set(mode='OBJECT')
+            
+            # Select the previous vertices
+            self.object.data.vertices[previousFirst].select = True
+            self.object.data.vertices[previousSecond].select = True
+            
+            if index == len(verticesFirst):
+                # Extend the vertices and edges
+                self.object.data.edges.add(2)
+                
+                # Add the vertices and edges
+                self.object.data.edges[-1].vertices = [previousFirst, listIndexVerticesLowWall[1]]
+                self.object.data.edges[-3].vertices = [previousSecond, listIndexVerticesLowWall[3]]
+                listVertice = [previousSecond, listIndexVerticesLowWall[3], listIndexVerticesLowWall[1], previousFirst]
+                
+                # Do the extrude if it's a merlon
+                if self.merlonHeight > 0 and ((self.beginByCrenel and index % 2 == 1) or (not (self.beginByCrenel) and index % 2 == 0)):
+                    manualExtrude(self.object, listVertice, mathutils.Vector((0, 0, self.merlonHeight)))
+            elif index != len(verticesSecond):
+                # Extend the vertices and edges
+                self.object.data.vertices.add(2)
+                self.object.data.edges.add(3)
+                
+                # Add the vertices and edges
+                self.object.data.vertices[-2].co = (verticesFirst[index].x, verticesFirst[index].y, verticesFirst[index].z)
+                self.object.data.vertices[-1].co = (verticesSecond[index].x, verticesSecond[index].y, verticesSecond[index].z)
+                self.object.data.edges[-1].vertices = [previousFirst, self.object.data.vertices[-2].index]
+                self.object.data.edges[-2].vertices = [self.object.data.vertices[-2].index, self.object.data.vertices[-1].index]
+                self.object.data.edges[-3].vertices = [previousSecond, self.object.data.vertices[-1].index]
+                listVertice = [previousSecond, self.object.data.vertices[-1].index, self.object.data.vertices[-2].index, previousFirst]
+                
+                # Add a face
+                createFace(self.object, [previousFirst, self.object.data.vertices[-2].index, self.object.data.vertices[-1].index, previousSecond])
+                
+                # Change the previous vertices
+                previousFirst = self.object.data.vertices[-2].index
+                previousSecond = self.object.data.vertices[-1].index
+            else:
+                # Extend the edges
+                self.object.data.edges.add(2)
+                self.object.data.edges[-1].vertices = [previousFirst, lastVertice[0]]
+                self.object.data.edges[-2].vertices = [previousSecond, lastVertice[1]]
+                listVertice = [previousSecond, lastVertice[1], lastVertice[0], previousFirst]
+                
+                # Add a face
+                createFace(self.object, [previousFirst, lastVertice[0], lastVertice[1], previousSecond])
+            
+            # Do the extrude if it's a merlon
+            if self.merlonHeight > 0 and ((self.beginByCrenel and index % 2 == 1) or (not (self.beginByCrenel) and index % 2 == 0)):
+                manualExtrude(self.object, listVertice, mathutils.Vector((0, 0, self.merlonHeight)))
+            
             index += 1
     
-    # Get the position for the towers
-    def getPositionBaseTowers():
-        # Deselect all vertex
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action = 'DESELECT')
-        bpy.ops.object.mode_set(mode='OBJECT')
-        
-        # Select all the vertices of the wall where z == 0
-        vertices = []
-        for vertex in bpy.context.active_object.data.vertices:
-            if vertex.co.z == 0:
-                vertex.select = True
-                vertices.append(vertex)
-        
-        numberVertices = int(len(vertices) / 2)
-        verticesReturns = []
-        for index in range(numberVertices):
-            vertex = mathutils.Vector(((vertices[index].co.x + vertices[index+numberVertices].co.x) / 2, (vertices[index].co.y + vertices[index+numberVertices].co.y) / 2, 0))
-            verticesReturns.append(vertex)
-        
-        # Deselect all vertex
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action = 'DESELECT')
-        bpy.ops.object.mode_set(mode='OBJECT')
-        
-        # Active the object
-        bpy.context.active_object.select = False
-        bpy.context.scene.objects.active = None
-        
-        return verticesReturns
+    def calculateVerticesCrenelMerlon(self, firstVertex, lastVertex, length1, length2):
+        listVertices = []
+        previousVertex = firstVertex
+        finish = False
+        index = 0
+        while not (finish):
+            # Defines the size
+            if index % 2 == 0:
+                length = length1
+            else:
+                length = length2
+            
+            # Get the vertice of intersection
+            verticesObject = intersectionCircleLineWithZ(lastVertex, previousVertex, length)
+            
+            if verticesObject[0] != None and verticesObject[1] != None:
+                # Get the good vertice
+                selectedVertex = getVertexInBox(True, previousVertex, lastVertex, verticesObject[0], verticesObject[1])
+                
+                if selectedVertex != None:
+                    listVertices.append(selectedVertex)
+                    previousVertex = selectedVertex
+                else:
+                    finish = True
+            index += 1
+        return listVertices

@@ -1,11 +1,6 @@
-import bpy
-from bpy.props import *
-from wallGenerator import *
-from tower import *
-
 bl_info = {
     "name": "Castle Generator",
-    "author": "Léon Denise and Guillaume Noisette",
+    "author": "Leon Denise and Guillaume Noisette",
     "version": (0, 1, 0),
     "blender": (2, 6, 6),
     "api": 36373,
@@ -14,104 +9,270 @@ bl_info = {
     'category': 'Object'
     }
 
+if "bpy" in locals():
+    import imp
+    imp.reload(utils)
+    imp.reload(wallGenerator)
+    imp.reload(groundGenerator)
+    imp.reload(doorGenerator)
+    imp.reload(towerGenerator)
+    imp.reload(terrainGenerator)
+else:
+    from utils import *
+    from wallGenerator import *
+    from groundGenerator import *
+    from doorGenerator import *
+    from towerGenerator import *
+    from terrainGenerator import *
+
+import bpy
+from bpy.props import *
+
 class propertiesCastleGenerator(bpy.types.PropertyGroup):
     # Walls
-    positionCenter = bpy.props.FloatVectorProperty(name="Central position castle", description="Central position of the castle", subtype="XYZ")
-    distanceFirstWall = bpy.props.IntProperty(name="Distance first wall", description="Distance between the first wall and the central position", default=300)
-    minimalWallLenghtFirst = bpy.props.IntProperty(name="Minimal lenght first wall", description="Minimal lenght of the first wall", default=171)
-    maximalWallLenghtFirst = bpy.props.IntProperty(name="Maximal lenght first wall", description="Maximal lenght of the first wall", default=171)
-    widthWallFirst = bpy.props.IntProperty(name="Width first wall", description="Width of the first wall", default=5)
-    minimalHeightWallFirst = bpy.props.IntProperty(name="Minimal height first wall", description="Minimal height of the first wall", default=100)
-    maximalHeightWallFirst = bpy.props.IntProperty(name="Maximal height first wall", description="Maximal height of the first wall", default=100)
+    wallWidth = bpy.props.FloatProperty(name="Width of wall", description="Width of wall", default=3)
+    wallHeight = bpy.props.FloatProperty(name="Height of wall", description="Height of wall", default=5)
+    
+	# Crenels
+    indexVertexGroup = bpy.props.IntProperty(name="Index edges", description="Index edges", default=3)
+    lowWallHeight = bpy.props.FloatProperty(name="Height low wall", description="Height of low wall", default=1)
+    lowWallWidth = bpy.props.FloatProperty(name="Width low wall", description="Width of low wall", default=0.5)
+    beginByCrenel = bpy.props.BoolProperty(name="Begin by crenel", description="Begin by a crenel", default=True)
+    inverseSensCreation = bpy.props.BoolProperty(name="Inverse sens creation", description="Inverse the sens of creation", default=False)
+    crenelLength = bpy.props.FloatProperty(name="Length crenel", description="Length of crenel", default=0.4)
+    merlonLength = bpy.props.FloatProperty(name="Length merlon", description="Length of merlon", default=0.6)
+    merlonHeight = bpy.props.FloatProperty(name="Height merlon", description="Height of merlon", default=0.5)
+    
+    # Door
+    doorHeight = bpy.props.FloatProperty(name="Height door", description="Height of door", default=3)
+    doorWidth = bpy.props.FloatProperty(name="Width door", description="Width of door", default=2)
+    doorPositionPercent = bpy.props.FloatProperty(name="Position door", description="Position in percent of door", default=50)
     
     # Towers
-    lodTower = bpy.props.IntProperty(name="Number vertices", description="Number vertices of the base of tower", default=16)
-    radiusTower = bpy.props.IntProperty(name="Size Tower", description="Size of the base of tower", default=20)
-    heightBodyTower = bpy.props.IntProperty(name="Height body tower", description="Height tower until ramparts", default=100)
-    heightBaseTower = bpy.props.IntProperty(name="Height curve", description="Height curve", default=4)
-    offsetBaseTower = bpy.props.IntProperty(name="Offset curve", description="Offset of the curve", default=2)
-    heightWallTower = bpy.props.IntProperty(name="Height wall tower", description="Height tower between ramparts and roof", default=20)
-    heightRempartTower = bpy.props.IntProperty(name="Height rampart tower", description="Height ramparts of tower", default=50)
-    offsetRempartTower = bpy.props.IntProperty(name="Offset rampart tower", description="Offset ramparts of tower", default=30)
+    numVertsTower = bpy.props.IntProperty(name="NumVerts", description="Number of vertices of the cylinder", default=24, min=3, max=64)
+    radiusTower = bpy.props.FloatProperty(name="Radius", description="Radius of the tower", default=5.0, min=2.0, max=100.0)
+    totalHeightTower = bpy.props.FloatProperty(name="TotalHeight", description="Total Height of the tower", default=20.0, min=5.0, max=100.0)
+    crenauxTower = bpy.props.BoolProperty(name="Crenaux", default=True)
+    poteauxTower = bpy.props.BoolProperty(name="Poteaux", default=False)
+    doorTower = bpy.props.BoolProperty(name="Porte", default=False)
+    rembardeTower = bpy.props.BoolProperty(name="Rembarde", default=False)
+    roofTower = bpy.props.BoolProperty(name="Roof", default=False)
+    etendardTower = bpy.props.BoolProperty(name="Etendard", default=False)
+    stairsTower = bpy.props.BoolProperty(name="Stairs", default=False)
+	
+	# Terrain
+    numBuissonTerrain = bpy.props.IntProperty(name="Buisson Number", description="", default=24, min=3, max=64)
 
 
-class panelCastleGenerator(bpy.types.Panel):
-    bl_label = "Castle Generator"
+class panelCastleGeneratorGround(bpy.types.Panel):
+    bl_label = "Castle Generator - Ground"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    def draw(self, context):
+        layout = self.layout
+        castlegenerator = bpy.context.window_manager.castlegenerator
+        # Ground
+        layout.label("Ground", icon='ACTION')
+        row = layout.row()
+        box = row.box()
+        box.operator("castlegenerator.generateground", text="Generate ground", icon="BRUSH_ADD")
+
+class panelCastleGeneratorTerrain(bpy.types.Panel):
+    bl_label = "Castle Generator - Terrain"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    def draw(self, context):
+        layout = self.layout
+        castlegenerator = bpy.context.window_manager.castlegenerator
+        # Ground
+        layout.label("Terrain", icon='ACTION')
+        row = layout.row()
+        box = row.box()
+        box.prop(castlegenerator, 'numBuissonTerrain')
+        box.operator("castlegenerator.generateterrain", text="Generate terrain", icon="BRUSH_ADD")
+
+class panelCastleGeneratorWall(bpy.types.Panel):
+    bl_label = "Castle Generator - Wall"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    def draw(self, context):
+        layout = self.layout
+        castlegenerator = bpy.context.window_manager.castlegenerator
+        objects = [obj for obj in bpy.context.scene.objects if obj.select]
+		
+        if len(objects) == 2 and objects[0] != None and objects[1] != None:
+            # Wall
+            layout.label("Wall", icon='ACTION')
+            row = layout.row()
+            box = row.box()
+            box.prop(castlegenerator, 'wallWidth')
+            box.prop(castlegenerator, 'wallHeight')
+            box.operator("castlegenerator.generatewalls", text="Generate walls", icon="MESH_CUBE")
+            layout.row()
+        elif len(objects) == 1 and objects[0] != None:
+            # Crenel
+            layout.label("Crenels", icon='ACTION')
+            row = layout.row()
+            box = row.box()
+            box.prop(castlegenerator, 'indexVertexGroup')
+            box.prop(castlegenerator, 'lowWallHeight')
+            box.prop(castlegenerator, 'lowWallWidth')
+            box.prop(castlegenerator, 'beginByCrenel')
+            box.prop(castlegenerator, 'inverseSensCreation')
+            box.prop(castlegenerator, 'crenelLength')
+            box.prop(castlegenerator, 'merlonLength')
+            box.prop(castlegenerator, 'merlonHeight')
+            box.operator("castlegenerator.generatecrenels", text="Generate crenels", icon="UNLINKED")
+            
+            # Door
+            layout.label("Door", icon='UV_ISLANDSEL')
+            row = layout.row()
+            box = row.box()
+            box.prop(castlegenerator, 'doorHeight')
+            box.prop(castlegenerator, 'doorWidth')
+            box.prop(castlegenerator, 'doorPositionPercent')
+            box.operator("castlegenerator.generatedoor", text="Generate door", icon="SNAP_FACE")
+
+class panelCastleGeneratorTower(bpy.types.Panel):
+    bl_label = "Castle Generator - Tower"
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     def draw(self, context):
         layout = self.layout
         castlegenerator = bpy.context.window_manager.castlegenerator
         
-        # Wall
-        layout.label("Wall", icon='ACTION')
-        row = layout.row()
-        box = row.box()
-        box.prop(castlegenerator, 'positionCenter')
-        box.prop(castlegenerator, 'distanceFirstWall')
-        box.prop(castlegenerator, 'minimalWallLenghtFirst')
-        box.prop(castlegenerator, 'maximalWallLenghtFirst')
-        box.prop(castlegenerator, 'widthWallFirst')
-        box.prop(castlegenerator, 'minimalHeightWallFirst')
-        box.prop(castlegenerator, 'maximalHeightWallFirst')
-        box.operator("castlegenerator.generatewalls", text="Generate walls", icon="MESH_CUBE")
-        layout.row()
-        
         # Tower
-        layout.label("Towers", icon='ACTION')
+        layout.label("Tower", icon='PINNED')
         row = layout.row()
         box = row.box()
-        box.prop(castlegenerator, 'lodTower')
+        box.prop(castlegenerator, 'numVertsTower')
         box.prop(castlegenerator, 'radiusTower')
-        box.prop(castlegenerator, 'heightBodyTower')
-        box.prop(castlegenerator, 'heightBaseTower')
-        box.prop(castlegenerator, 'offsetBaseTower')
-        box.prop(castlegenerator, 'heightWallTower')
-        box.prop(castlegenerator, 'heightRempartTower')
-        box.prop(castlegenerator, 'offsetRempartTower')
-        box.operator("castlegenerator.generatetowers", text="Generate towers", icon="PINNED")
+        box.prop(castlegenerator, 'totalHeightTower')
+        box.prop(castlegenerator, 'crenauxTower')
+        box.prop(castlegenerator, 'poteauxTower')
+        box.prop(castlegenerator, 'doorTower')
+        box.prop(castlegenerator, 'rembardeTower')
+        box.prop(castlegenerator, 'roofTower')
+        box.prop(castlegenerator, 'etendardTower')
+        box.prop(castlegenerator, 'stairsTower')
+        box.operator("castlegenerator.generatetowers", text="Generate tower", icon="MESH_CYLINDER")
 
+class panelCastleGeneratorCapture(bpy.types.Panel):
+    bl_label = "Castle Generator - Capture"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    def draw(self, context):
+        layout = self.layout
+        castlegenerator = bpy.context.window_manager.castlegenerator
+        
+        # Capture
+        layout.label("Capture", icon='RENDER_REGION')
+        row = layout.row()
+        box = row.box()
+        box.operator("castlegenerator.positioncapture", text="Position capture", icon="SCENE")
 
+# GROUND
+class OBJECT_OT_GenerateGround(bpy.types.Operator):
+    bl_idname = "castlegenerator.generateground"
+    bl_label = "Generate ground"
+    def execute(self, context):
+        GroundGenerator()
+        return{'FINISHED'}
+# TERRAIN
+class OBJECT_OT_GenerateTerrain(bpy.types.Operator):
+    bl_idname = "castlegenerator.generateterrain"
+    bl_label = "Generate terrain"
+    def execute(self, context):
+        castlegenerator = bpy.context.window_manager.castlegenerator
+        TerrainGenerator(castlegenerator.numBuissonTerrain)
+        return{'FINISHED'}
+# WALLS
 class OBJECT_OT_GenerateWalls(bpy.types.Operator):
     bl_idname = "castlegenerator.generatewalls"
     bl_label = "Generate walls"
     def execute(self, context):
         castlegenerator = bpy.context.window_manager.castlegenerator
-        wall = WallGenerator(castlegenerator.positionCenter, castlegenerator.distanceFirstWall, castlegenerator.minimalWallLenghtFirst, castlegenerator.maximalWallLenghtFirst, castlegenerator.widthWallFirst, castlegenerator.minimalHeightWallFirst, castlegenerator.maximalHeightWallFirst)
+        objects = [obj for obj in bpy.context.scene.objects if obj.select]
+		
+        if len(objects) == 2 and objects[0] != None and objects[1] != None:
+            WallGenerator(objects[0], objects[1], castlegenerator.wallWidth, castlegenerator.wallHeight)
         return{'FINISHED'}
-
+# CRENELS
+class OBJECT_OT_GenerateCrenels(bpy.types.Operator):
+    bl_idname = "castlegenerator.generatecrenels"
+    bl_label = "Generate crenels"
+    def execute(self, context):
+        castlegenerator = bpy.context.window_manager.castlegenerator
+        objects = [obj for obj in bpy.context.scene.objects if obj.select]
+		
+        if len(objects) == 1 and objects[0] != None:
+            CrenelGenerator(objects[0], castlegenerator.indexVertexGroup, castlegenerator.lowWallHeight, castlegenerator.lowWallWidth, castlegenerator.beginByCrenel, castlegenerator.inverseSensCreation, castlegenerator.crenelLength, castlegenerator.merlonLength, castlegenerator.merlonHeight)
+        return{'FINISHED'}
+# DOOR
+class OBJECT_OT_GenerateDoor(bpy.types.Operator):
+    bl_idname = "castlegenerator.generatedoor"
+    bl_label = "Generate door"
+    def execute(self, context):
+        castlegenerator = bpy.context.window_manager.castlegenerator
+        objects = [obj for obj in bpy.context.scene.objects if obj.select]
+		
+        if len(objects) == 1 and objects[0] != None:
+            DoorGenerator(objects[0], castlegenerator.doorHeight, castlegenerator.doorWidth, castlegenerator.doorPositionPercent)
+        return{'FINISHED'}
+# TOWER
 class OBJECT_OT_GenerateTowers(bpy.types.Operator):
     bl_idname = "castlegenerator.generatetowers"
     bl_label = "Generate towers"
     def execute(self, context):
         castlegenerator = bpy.context.window_manager.castlegenerator
-        if bpy.context.active_object != None:
-            positionTowers = WallGenerator.getPositionBaseTowers()
-            index = 0
-            for pos in positionTowers:
-                if index == 0:
-                    Tower(pos, castlegenerator.lodTower, castlegenerator.radiusTower, castlegenerator.heightBodyTower, castlegenerator.heightBaseTower, castlegenerator.offsetBaseTower, castlegenerator.heightWallTower, castlegenerator.heightRempartTower, castlegenerator.offsetRempartTower)
-                else:
-                    bpy.ops.object.duplicate_move(TRANSFORM_OT_translate={"value":(0,0,0)})
-                    bpy.context.active_object.location = pos
-                index += 1
-        else:
-            print("No wall selected!!")
+        
+        TowerGenerator(bpy.context.scene.cursor_location.copy(),
+		castlegenerator.numVertsTower,
+		castlegenerator.radiusTower,
+		castlegenerator.totalHeightTower,
+		castlegenerator.crenauxTower,
+		castlegenerator.poteauxTower,
+		castlegenerator.doorTower,
+		castlegenerator.rembardeTower,
+		castlegenerator.roofTower,
+		castlegenerator.etendardTower,
+		castlegenerator.stairsTower)
+        return{'FINISHED'}
+# CAPTURE
+class OBJECT_OT_PositionCapture(bpy.types.Operator):
+    bl_idname = "castlegenerator.positioncapture"
+    bl_label = "Position capture"
+    def execute(self, context):
+        castlegenerator = bpy.context.window_manager.castlegenerator
+        
+        # Add Camera to scene and set to view
+        removeFromCollection(bpy.data.cameras, 'Camera')
+        bpy.ops.object.camera_add()
+        bpy.data.cameras["Camera"].clip_end = 1000.0
+        bpy.data.objects["Camera"].name = "tmp.camera"
+        bpy.ops.view3d.camera_to_view()
+        bpy.data.worlds[0].light_settings.use_ambient_occlusion = True
+        bpy.data.worlds[0].light_settings.use_environment_light = True
+        bpy.context.scene.render.use_edge_enhance = True
+        bpy.ops.render.render()
+        
         return{'FINISHED'}
 
 
-classes = [propertiesCastleGenerator, panelCastleGenerator, OBJECT_OT_GenerateWalls, OBJECT_OT_GenerateTowers]
+classes = [propertiesCastleGenerator, panelCastleGeneratorGround, panelCastleGeneratorTerrain, panelCastleGeneratorWall, panelCastleGeneratorTower, panelCastleGeneratorCapture, OBJECT_OT_GenerateGround, OBJECT_OT_GenerateTerrain, OBJECT_OT_GenerateWalls, OBJECT_OT_GenerateCrenels, OBJECT_OT_GenerateDoor, OBJECT_OT_GenerateTowers, OBJECT_OT_PositionCapture]
 
 def register():
     for c in classes:
         bpy.utils.register_class(c)
     bpy.types.WindowManager.castlegenerator = bpy.props.PointerProperty(type=propertiesCastleGenerator)
+    #bpy.utils.register_module(__name__)
 
 
 def unregister():
     for c in classes:
         bpy.utils.unregister_class(c)
     del bpy.types.WindowManager.castlegenerator
+    #bpy.utils.unregister_module(__name__)
     
 if __name__ == "__main__":
     register()
